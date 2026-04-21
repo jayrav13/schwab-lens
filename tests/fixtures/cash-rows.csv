@@ -1,0 +1,8 @@
+"Date","Action","Symbol","Description","Quantity","Price","Fees & Comm","Amount"
+"02/05/2026","Journal","","JOURNAL FRM ...291","","","","$5000.00"
+"02/05/2026","Wire Sent","","WIRED FUNDS DISBURSED","","","","-$5000.00"
+"02/05/2026","Misc Cash Entry","","WAIVE WIRE FEE","","","","$15.00"
+"02/05/2026","Service Fee","","WIRED FUNDS FEE","","","","-$15.00"
+"03/24/2026","Qualified Dividend","HL","HECLA MNG CO","","","","$0.75"
+"01/16/2026 as of 01/15/2026","Bank Interest","","BANK INT ...526 SCHWAB BANK","","","","$0.19"
+"02/26/2026","Credit Interest","","SCHWAB1 INT 01/29-02/25","","","","$0.04"

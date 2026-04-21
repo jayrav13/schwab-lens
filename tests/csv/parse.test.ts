@@ -62,6 +62,35 @@ describe("parseSchwabCsv — stock Buy/Sell", () => {
   });
 });
 
+describe("parseSchwabCsv — cash rows", () => {
+  const txs = parseSchwabCsv(fixture("cash-rows.csv"));
+
+  it("maps Journal and Wire Sent actions", () => {
+    expect(txs[0].action).toBe("Journal");
+    expect(txs[0].amount).toBe(5000);
+    expect(txs[1].action).toBe("WireSent");
+    expect(txs[1].amount).toBe(-5000);
+  });
+
+  it("maps Misc Cash Entry and Service Fee", () => {
+    expect(txs[2].action).toBe("MiscCashEntry");
+    expect(txs[3].action).toBe("ServiceFee");
+    expect(txs[3].amount).toBe(-15);
+  });
+
+  it("maps Qualified Dividend and retains ticker", () => {
+    expect(txs[4].action).toBe("QualifiedDividend");
+    expect(txs[4].ticker).toBe("HL");
+    expect(txs[4].amount).toBe(0.75);
+  });
+
+  it("maps Bank Interest and Credit Interest with empty tickers", () => {
+    expect(txs[5].action).toBe("BankInterest");
+    expect(txs[5].ticker).toBeUndefined();
+    expect(txs[6].action).toBe("CreditInterest");
+  });
+});
+
 describe("parseSchwabCsv — Sell to Open", () => {
   it("parses one STO row", () => {
     const txs = parseSchwabCsv(fixture("simple-sto.csv"));
