@@ -111,3 +111,13 @@ describe("parseSchwabCsv — Sell to Open", () => {
     expect(t.amount).toBe(39.34);
   });
 });
+
+describe("parseSchwabCsv — unknown action", () => {
+  it("maps an unknown action to 'Unknown' and preserves the raw label", () => {
+    const txs = parseSchwabCsv(fixture("unknown-action.csv"));
+    expect(txs).toHaveLength(1);
+    expect(txs[0].action).toBe("Unknown");
+    expect(txs[0].rawAction).toBe("Merger Adjustment");
+    expect(txs[0].amount).toBe(123.45);
+  });
+});
