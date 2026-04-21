@@ -20,14 +20,28 @@ Four dashboard cards, all derivable from a single Schwab CSV export:
 3. **Open positions** — current short options + assigned share lots, no live quotes
 4. **Transaction log** — searchable / filterable raw transactions
 
-### v2 (immediately after v1 works, tracked as GitHub issues)
+### v2 (shipped)
 
-- Premium by ticker
-- How contracts resolved (win rate)
-- Cash & ancillary yield (dividends, interest, fees)
-- Return metrics (total, annualized, monthly)
-- Capital at risk
-- Follow-on: mark-to-market NAV using live share quotes (the "Portfolio Value" metric from the xlsx; adds a market-data dependency)
+- Premium by ticker (#1)
+- How contracts resolved / win rate (#2)
+- Cash & ancillary yield (#3)
+- Return metrics — total, annualized, monthly (#4)
+- Capital at risk (#5)
+- Mark-to-market (current-price) — Portfolio Value KPI + per-ticker breakdown card (#7)
+
+### v3 / follow-ups
+
+- Trade pairing — closed trades ledger (#6)
+- Historical mark-to-market line on NavCard (#9) — extends #7 from current-price to time-series
+
+## Options Income vs Portfolio Value
+
+Two parallel NAV metrics, both seeded at the same value and both honest — they just answer different questions.
+
+- **Options Income NAV** = cash + Σ(shares × weighted cost basis). This is what the wheel strategy *earned* in realized terms. It treats assigned shares as cost-basis placeholders, ignoring subsequent price movement. Use this to judge the strategy itself.
+- **Portfolio Value** = cash + Σ(shares × current market price). This is what the account is *worth* if liquidated now. It captures unrealized P&L on held shares. Use this for a full picture of account health.
+
+Options Income is always available. Portfolio Value requires `config.marketData.enabled = true` and working market-data access. When quotes are unavailable, Portfolio Value falls back to cost basis per missing ticker (matching Options Income for that ticker) and flags the missing tickers in the UI.
 
 ## Stack and architecture
 

@@ -20,6 +20,7 @@ describe("computeNavSeries", () => {
     const series = computeNavSeries([], {
       seedDate: "2026-01-15",
       seedValue: 12345,
+      marketData: { enabled: false },
     });
     expect(series).toEqual([{ date: "2026-01-15", nav: 12345 }]);
   });
@@ -27,7 +28,7 @@ describe("computeNavSeries", () => {
   it("adds realized cash flows", () => {
     const series = computeNavSeries(
       [tx({ amount: 100, tradeDate: "2026-01-05" })],
-      { seedDate: "2026-01-15", seedValue: 12345 },
+      { seedDate: "2026-01-15", seedValue: 12345, marketData: { enabled: false } },
     );
     expect(series.at(-1)).toEqual({ date: "2026-01-05", nav: 25100 });
   });
@@ -45,7 +46,7 @@ describe("computeNavSeries", () => {
           tradeDate: "2026-01-30",
         }),
       ],
-      { seedDate: "2026-01-15", seedValue: 12345 },
+      { seedDate: "2026-01-15", seedValue: 12345, marketData: { enabled: false } },
     );
     expect(series.at(-1)?.nav).toBeCloseTo(12345, 2);
   });

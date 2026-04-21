@@ -11,11 +11,12 @@ import { OutcomesCard } from "@/app/components/OutcomesCard";
 import { PremiumByTickerCard } from "@/app/components/PremiumByTickerCard";
 import { CashYieldCard } from "@/app/components/CashYieldCard";
 import { CapitalAtRiskCard } from "@/app/components/CapitalAtRiskCard";
+import { MarkToMarketCard } from "@/app/components/MarkToMarketCard";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const data = loadDashboard();
+export default async function Home() {
+  const data = await loadDashboard();
 
   if (data.kind === "no-csv") {
     return <OnboardingCard dataDir="data/" missing="csv" />;
@@ -36,7 +37,7 @@ export default function Home() {
     );
   }
 
-  const { state, sourceFile, loadedAt } = data;
+  const { state, sourceFile, loadedAt, markToMarket } = data;
   const asOfDate =
     state.navSeries.at(-1)?.date ?? state.config.seedDate;
 
@@ -58,7 +59,7 @@ export default function Home() {
 
       <AttentionBanner warnings={state.warnings} />
 
-      <SummaryStrip state={state} />
+      <SummaryStrip state={state} markToMarket={markToMarket} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div className="md:col-span-2">
@@ -91,6 +92,12 @@ export default function Home() {
       <div className="mb-4">
         <CapitalAtRiskCard state={state} />
       </div>
+
+      {markToMarket !== null && markToMarket.rows.length > 0 && (
+        <div className="mb-4">
+          <MarkToMarketCard markToMarket={markToMarket} />
+        </div>
+      )}
     </main>
   );
 }

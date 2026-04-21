@@ -1,9 +1,10 @@
 import type { PortfolioState } from "@/lib/model/types";
+import type { MarkToMarket } from "@/lib/model/metrics/mark_to_market";
 import { formatCurrency } from "@/lib/util/money";
 
-type Props = { state: PortfolioState };
+type Props = { state: PortfolioState; markToMarket: MarkToMarket | null };
 
-export function SummaryStrip({ state }: Props) {
+export function SummaryStrip({ state, markToMarket }: Props) {
   const nav = state.navSeries.at(-1)?.nav ?? state.config.seedValue;
   const cumulativeExternal = state.externalFlows.reduce(
     (a, e) => a + e.signedAmount,
@@ -21,34 +22,61 @@ export function SummaryStrip({ state }: Props) {
   const deltaColor = gain >= 0 ? "text-emerald-600" : "text-red-600";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-      <Card
-        label="Options Income NAV"
-        value={formatCurrency(nav)}
-        delta={`${gain >= 0 ? "+" : "−"}${formatCurrency(Math.abs(gain))} since seed`}
-        deltaClass={deltaColor}
-      />
-      <Card
-        label="Return since seed"
-        value={`${(returnPct * 100).toFixed(2)}%`}
-        valueClass={pctColor}
-        delta={`external flows ${formatCurrency(cumulativeExternal)}`}
-      />
-      <Card
-        label="Cash"
-        value={formatCurrency(finalCash)}
-        delta={`${((finalCash / nav) * 100).toFixed(1)}% of NAV`}
-      />
-      <Card
-        label="Shares at cost"
-        value={formatCurrency(sharesAtCost)}
-        delta={
-          state.openSharePositions.length
-            ? `${state.openSharePositions.length} ticker(s)`
-            : "none"
-        }
-      />
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <Card
+          label="Options Income NAV"
+          value={formatCurrency(nav)}
+          delta={`${gain >= 0 ? "+" : "−"}${formatCurrency(Math.abs(gain))} since seed`}
+          deltaClass={deltaColor}
+        />
+        <Card
+          label="Return since seed"
+          value={`${(returnPct * 100).toFixed(2)}%`}
+          valueClass={pctColor}
+          delta={`external flows ${formatCurrency(cumulativeExternal)}`}
+        />
+        <Card
+          label="Cash"
+          value={formatCurrency(finalCash)}
+          delta={`${((finalCash / nav) * 100).toFixed(1)}% of NAV`}
+        />
+        <Card
+          label="Shares at cost"
+          value={formatCurrency(sharesAtCost)}
+          delta={
+            state.openSharePositions.length
+              ? `${state.openSharePositions.length} ticker(s)`
+              : "none"
+          }
+        />
+      </div>
+
+      {markToMarket !== null && markToMarket.rows.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <Card
+            label="Portfolio Value (live)"
+            value={formatCurrency(markToMarket.portfolioValue)}
+            valueClass={
+              markToMarket.portfolioValue >= markToMarket.optionsIncomeNav
+                ? "text-emerald-600"
+                : "text-red-600"
+            }
+            delta={`${markToMarket.portfolioValue >= markToMarket.optionsIncomeNav ? "+" : "−"}${formatCurrency(Math.abs(markToMarket.portfolioValue - markToMarket.optionsIncomeNav))} vs. Options Income${markToMarket.missingQuotes.length > 0 ? ` · ${markToMarket.missingQuotes.length} ticker(s) missing` : ""}`}
+          />
+          <Card
+            label="Unrealized on held shares"
+            value={formatCurrency(markToMarket.totalUnrealized)}
+            valueClass={
+              markToMarket.totalUnrealized >= 0
+                ? "text-emerald-600"
+                : "text-red-600"
+            }
+            delta={`${((markToMarket.totalUnrealized / sharesAtCost) * 100 || 0).toFixed(2)}% vs. cost basis`}
+          />
+        </div>
+      )}
+    </>
   );
 }
 

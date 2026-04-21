@@ -14,6 +14,7 @@ describe("integration: fake portfolio CSV", () => {
   const state = buildPortfolio(txs, {
     seedDate: "2026-01-15",
     seedValue: 10000,
+    marketData: { enabled: false },
   });
 
   it("parses all 14 data rows", () => {
@@ -63,8 +64,8 @@ describe("integration: fake portfolio CSV", () => {
 });
 
 describe("loadDashboard", () => {
-  it("returns a tagged-union result reflecting local data/ state", () => {
-    const result = loadDashboard();
+  it("returns a tagged-union result reflecting local data/ state", async () => {
+    const result = await loadDashboard();
     expect(["ready", "no-csv", "no-config", "parse-error"]).toContain(
       result.kind,
     );

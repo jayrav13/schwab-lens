@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { computeReturnMetrics } from "@/lib/model/metrics/returns";
 
 describe("computeReturnMetrics", () => {
-  const config = { seedDate: "2026-01-15", seedValue: 10000 };
+  const config = { seedDate: "2026-01-15", seedValue: 10000, marketData: { enabled: false } };
 
   it("computes total and annualized return with zero external flows", () => {
     const r = computeReturnMetrics(
