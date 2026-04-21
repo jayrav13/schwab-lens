@@ -38,6 +38,30 @@ describe("parseSchwabCsv — other option actions", () => {
   });
 });
 
+describe("parseSchwabCsv — stock Buy/Sell", () => {
+  const txs = parseSchwabCsv(fixture("stock-actions.csv"));
+
+  it("parses a stock Buy row", () => {
+    const t = txs[0];
+    expect(t.action).toBe("Buy");
+    expect(t.ticker).toBe("AG");
+    expect(t.option).toBeUndefined();
+    expect(t.quantity).toBe(100);
+    expect(t.price).toBe(25);
+    expect(t.amount).toBe(-2500);
+  });
+
+  it("parses a stock Sell row", () => {
+    const t = txs[1];
+    expect(t.action).toBe("Sell");
+    expect(t.ticker).toBe("AG");
+    expect(t.option).toBeUndefined();
+    expect(t.quantity).toBe(100);
+    expect(t.amount).toBe(2499.98);
+    expect(t.fees).toBe(0.02);
+  });
+});
+
 describe("parseSchwabCsv — Sell to Open", () => {
   it("parses one STO row", () => {
     const txs = parseSchwabCsv(fixture("simple-sto.csv"));
