@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { parseSchwabCsv } from "@/lib/csv/parse";
 import { buildPortfolio } from "@/lib/model/portfolio";
+import { loadDashboard } from "@/lib/server/dashboard";
 
 describe("integration: real sanitized CSV", () => {
   const csv = readFileSync(
@@ -38,5 +39,14 @@ describe("integration: real sanitized CSV", () => {
 
   it("no warnings (clean history)", () => {
     expect(state.warnings).toEqual([]);
+  });
+});
+
+describe("loadDashboard", () => {
+  it("returns a tagged-union result reflecting local data/ state", () => {
+    const result = loadDashboard();
+    expect(["ready", "no-csv", "no-config", "parse-error"]).toContain(
+      result.kind,
+    );
   });
 });
