@@ -1,0 +1,4 @@
+"Date","Action","Symbol","Description","Quantity","Price","Fees & Comm","Amount"
+"04/17/2026","Buy to Close","HL 04/17/2026 21.00 C","CALL HECLA MNG CO $21 EXP 04/17/26","2","$0.04","$0.02","-$8.02"
+"04/20/2026 as of 04/17/2026","Expired","SOXL 04/17/2026 65.00 P","PUT DRXN SEMICN BULL 3X $65 EXP 04/17/26","1","","",""
+"02/02/2026 as of 01/30/2026","Assigned","CLSK 01/30/2026 12.00 P","PUT CLEANSPARK INC $12 EXP 01/30/26","2","","",""
