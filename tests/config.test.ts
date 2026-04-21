@@ -1,0 +1,33 @@
+import { describe, it, expect } from "vitest";
+import { parseConfig } from "@/lib/config";
+
+describe("parseConfig", () => {
+  it("parses a valid config JSON", () => {
+    const c = parseConfig(
+      JSON.stringify({ seedDate: "2026-01-15", seedValue: 12345 }),
+    );
+    expect(c).toEqual({ seedDate: "2026-01-15", seedValue: 12345 });
+  });
+
+  it("throws on missing seedDate", () => {
+    expect(() => parseConfig(JSON.stringify({ seedValue: 100 }))).toThrow(
+      /seedDate/,
+    );
+  });
+
+  it("throws on non-ISO seedDate", () => {
+    expect(() =>
+      parseConfig(JSON.stringify({ seedDate: "1/1/2026", seedValue: 100 })),
+    ).toThrow(/YYYY-MM-DD/);
+  });
+
+  it("throws on non-numeric seedValue", () => {
+    expect(() =>
+      parseConfig(JSON.stringify({ seedDate: "2026-01-15", seedValue: "25k" })),
+    ).toThrow(/seedValue/);
+  });
+
+  it("throws on invalid JSON", () => {
+    expect(() => parseConfig("not json")).toThrow();
+  });
+});
