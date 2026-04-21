@@ -20,11 +20,11 @@ export default function Home() {
   }
   if (data.kind === "parse-error") {
     return (
-      <div className="max-w-2xl mx-auto mt-16 rounded-lg border border-red-300 bg-red-50 p-6">
-        <h2 className="text-lg font-semibold text-red-900 mb-2">
+      <div className="max-w-2xl mx-auto mt-16 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950 p-6">
+        <h2 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
           Couldn&rsquo;t parse the CSV
         </h2>
-        <pre className="bg-red-100 text-red-900 text-xs p-3 rounded overflow-x-auto">
+        <pre className="bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-100 text-xs p-3 rounded overflow-x-auto">
           {data.message}
         </pre>
       </div>
@@ -37,16 +37,16 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-6 max-w-7xl mx-auto">
-      <header className="rounded-lg border border-gray-200 bg-white px-5 py-4 mb-4 flex items-baseline justify-between">
+      <header className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-5 py-4 mb-4 flex items-baseline justify-between">
         <div>
           <div className="text-xl font-bold">Demo · Options Income</div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
             Seed ${state.config.seedValue.toLocaleString()} on{" "}
             {state.config.seedDate} · Data through {asOfDate} · Source:{" "}
-            <code className="bg-gray-100 px-1 rounded">{sourceFile}</code>
+            <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">{sourceFile}</code>
           </div>
         </div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           Last refresh {new Date(loadedAt).toLocaleTimeString()}
         </div>
       </header>

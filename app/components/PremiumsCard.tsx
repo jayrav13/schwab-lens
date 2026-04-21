@@ -25,11 +25,11 @@ export function PremiumsCard({ state }: Props) {
   const maxPx = 130;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 mb-0.5">
+    <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200 mb-0.5">
         Premiums collected
       </h3>
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
         Monthly — green is gross (STO); red stacked on top is paid to close
         (BTC). Value below each bar is that month&rsquo;s net.
       </p>
@@ -52,17 +52,17 @@ export function PremiumsCard({ state }: Props) {
                   style={{ height: `${grossPx}px`, minHeight: 2 }}
                 />
               </div>
-              <div className="text-[10px] text-gray-500 mt-1">
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                 {MONTH_LABELS[m.month.slice(5)] ?? m.month}
               </div>
-              <div className="text-[11px] font-semibold text-emerald-700">
+              <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
                 {formatCurrency(m.net).replace(/\.00$/, "")}
               </div>
             </div>
           );
         })}
       </div>
-      <div className="flex gap-3 text-[11px] text-gray-500 mt-3">
+      <div className="flex gap-3 text-[11px] text-gray-500 dark:text-gray-400 mt-3">
         <span>
           <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-600 mr-1 align-middle" />
           Gross {formatCurrency(state.premiumTotals.gross)}
@@ -71,7 +71,7 @@ export function PremiumsCard({ state }: Props) {
           <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-300 mr-1 align-middle" />
           Closed −{formatCurrency(state.premiumTotals.closed)}
         </span>
-        <strong className="text-emerald-700">
+        <strong className="text-emerald-700 dark:text-emerald-400">
           Net {formatCurrency(state.premiumTotals.net)}
         </strong>
       </div>

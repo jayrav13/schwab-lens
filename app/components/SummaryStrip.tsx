@@ -66,14 +66,14 @@ function Card({
   deltaClass?: string;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-      <div className="text-[11px] uppercase tracking-wide text-gray-500">
+    <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3">
+      <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {label}
       </div>
       <div className={`text-2xl font-bold mt-0.5 ${valueClass ?? ""}`}>
         {value}
       </div>
-      <div className={`text-xs mt-0.5 ${deltaClass ?? "text-gray-500"}`}>
+      <div className={`text-xs mt-0.5 ${deltaClass ?? "text-gray-500 dark:text-gray-400"}`}>
         {delta}
       </div>
     </div>

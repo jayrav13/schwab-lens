@@ -18,11 +18,11 @@ type Props = { warnings: Warning[] };
 export function AttentionBanner({ warnings }: Props) {
   if (warnings.length === 0) return null;
   return (
-    <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 mb-4">
-      <h3 className="text-sm font-semibold text-amber-900 mb-1">
+    <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950 p-4 mb-4">
+      <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
         Needs attention
       </h3>
-      <ul className="list-disc list-inside text-sm text-amber-900">
+      <ul className="list-disc list-inside text-sm text-amber-900 dark:text-amber-200">
         {warnings.map((w, i) => (
           <li key={i}>{describe(w)}</li>
         ))}

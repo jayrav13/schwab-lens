@@ -16,20 +16,20 @@ export function OpenPositionsCard({ state, asOfDate }: Props) {
   const shares = state.openSharePositions;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 mb-0.5">
+    <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200 mb-0.5">
         Open positions
       </h3>
-      <p className="text-xs text-gray-500 mb-3">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
         {opts.length} contract(s) · {shares.length} share lot(s) · no live
         quotes in v1
       </p>
 
-      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-2 mb-1">
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 mt-2 mb-1">
         Short options
       </div>
       {opts.length === 0 ? (
-        <p className="text-xs text-gray-400 py-2">None open.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 py-2">None open.</p>
       ) : (
         opts.map((o) => {
           const dte = daysBetween(asOfDate, o.contract.expiry);
@@ -37,22 +37,22 @@ export function OpenPositionsCard({ state, asOfDate }: Props) {
           return (
             <div
               key={`${o.contract.ticker}-${o.contract.expiry}-${o.contract.strike}-${o.contract.type}`}
-              className="flex justify-between py-1.5 border-b border-gray-100 last:border-0 text-[13px]"
+              className="flex justify-between py-1.5 border-b border-gray-100 dark:border-neutral-800 last:border-0 text-[13px]"
             >
               <div>
                 <strong>{o.contract.ticker}</strong>{" "}
                 {formatExpiry(o.contract.expiry)} $
                 {o.contract.strike.toFixed(2)} {o.contract.type[0]}
-                <div className="text-[11px] text-gray-500">
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
                   {o.quantityOpen} ct · opened{" "}
                   {formatExpiry(entry.date)}
                 </div>
               </div>
               <div className="text-right">
-                <strong className="text-emerald-700">
+                <strong className="text-emerald-700 dark:text-emerald-400">
                   +{formatCurrency(o.netPremiumCollected)}
                 </strong>
-                <div className="text-[11px] text-gray-500">
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
                   {dte}d to expiry
                 </div>
               </div>
@@ -61,24 +61,24 @@ export function OpenPositionsCard({ state, asOfDate }: Props) {
         })
       )}
 
-      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-4 mb-1">
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 mt-4 mb-1">
         Share holdings
       </div>
       {shares.length === 0 ? (
-        <p className="text-xs text-gray-400 py-2">None held.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 py-2">None held.</p>
       ) : (
         shares.map((s) => (
           <div
             key={s.ticker}
-            className="flex justify-between py-1.5 border-b border-gray-100 last:border-0 text-[13px]"
+            className="flex justify-between py-1.5 border-b border-gray-100 dark:border-neutral-800 last:border-0 text-[13px]"
           >
             <div>
               <strong>{s.ticker}</strong>
-              <div className="text-[11px] text-gray-500">assigned share lot</div>
+              <div className="text-[11px] text-gray-500 dark:text-gray-400">assigned share lot</div>
             </div>
             <div className="text-right">
               <strong>{s.shares} sh</strong>
-              <div className="text-[11px] text-gray-500">
+              <div className="text-[11px] text-gray-500 dark:text-gray-400">
                 @ {formatCurrency(s.weightedCostBasis)} ·{" "}
                 {formatCurrency(s.shares * s.weightedCostBasis)}
               </div>

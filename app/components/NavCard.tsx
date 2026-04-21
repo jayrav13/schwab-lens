@@ -36,15 +36,15 @@ export function NavCard({ state }: Props) {
   });
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 mb-0.5">
+    <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200 mb-0.5">
         Options Income — NAV
       </h3>
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
         Cash + shares at cost basis, less external flows. Point at each
         transaction date.
       </p>
-      <div className="h-[180px] relative border-l border-b border-gray-200">
+      <div className="h-[180px] relative border-l border-b border-gray-200 dark:border-neutral-800">
         <svg
           className="absolute inset-0"
           viewBox="0 0 600 180"
@@ -70,12 +70,12 @@ export function NavCard({ state }: Props) {
           />
         </svg>
       </div>
-      <div className="flex justify-between text-[10px] text-gray-400 mt-1 pl-1">
+      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1 pl-1">
         {ticks.map((t, i) => (
           <span key={i}>{t}</span>
         ))}
       </div>
-      <div className="flex gap-3 text-[11px] text-gray-500 mt-2">
+      <div className="flex gap-3 text-[11px] text-gray-500 dark:text-gray-400 mt-2">
         <span>
           <span className="inline-block w-2.5 h-2.5 align-middle rounded-sm bg-emerald-600 mr-1" />
           NAV
@@ -91,8 +91,8 @@ export function NavCard({ state }: Props) {
 
 function EmptyCard() {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <p className="text-sm text-gray-500">Not enough data points yet.</p>
+    <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+      <p className="text-sm text-gray-500 dark:text-gray-400">Not enough data points yet.</p>
     </div>
   );
 }
