@@ -54,3 +54,28 @@ export function groupPremiumsByMonth(
       net: gross - closed,
     }));
 }
+
+export type TickerPremium = {
+  ticker: string;
+  gross: number;
+  closed: number;
+  net: number;
+  assignmentCount: number;
+};
+
+export function groupPremiumsByTicker(txs: Transaction[]): TickerPremium[] {
+  const by = new Map<string, TickerPremium>();
+  for (const t of txs) {
+    const ticker = t.option?.ticker;
+    if (!ticker) continue;
+    const row =
+      by.get(ticker) ??
+      { ticker, gross: 0, closed: 0, net: 0, assignmentCount: 0 };
+    if (t.action === "SellToOpen") row.gross += t.amount;
+    else if (t.action === "BuyToClose") row.closed += -t.amount;
+    else if (t.action === "Assigned") row.assignmentCount += t.quantity;
+    by.set(ticker, row);
+  }
+  for (const row of by.values()) row.net = row.gross - row.closed;
+  return [...by.values()].sort((a, b) => b.net - a.net);
+}
