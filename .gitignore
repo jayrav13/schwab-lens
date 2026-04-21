@@ -10,6 +10,9 @@
 *.csv
 *.xlsx
 
+# Allow hand-built test fixtures (no real data)
+!tests/fixtures/*.csv
+
 # dependencies
 /node_modules
 /.pnp
