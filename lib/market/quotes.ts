@@ -99,14 +99,26 @@ export async function fetchQuotes(
   return results;
 }
 
-async function defaultYahooFetch(ticker: string): Promise<{ price: number }> {
-  // Dynamic import so tests that pass fetchOne don't pay the load cost.
+type YahooLike = {
+  quote: (symbol: string) => Promise<{ regularMarketPrice?: number }>;
+};
+
+let yahooInstance: YahooLike | null = null;
+
+async function getYahoo(): Promise<YahooLike> {
+  if (yahooInstance) return yahooInstance;
   const yf = await import("yahoo-finance2");
-  const yahooFinance = yf.default as {
-    quote: (symbol: string) => Promise<{ regularMarketPrice?: number }>;
-  };
-  // yahoo-finance2 handles the cookie/crumb dance internally.
-  const q = await yahooFinance.quote(ticker);
+  const YahooFinance = yf.default as unknown as new (opts?: {
+    suppressNotices?: string[];
+  }) => YahooLike;
+  yahooInstance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
+  return yahooInstance;
+}
+
+async function defaultYahooFetch(ticker: string): Promise<{ price: number }> {
+  // yahoo-finance2 v3+ requires an instance; handles cookie/crumb dance internally.
+  const yahoo = await getYahoo();
+  const q = await yahoo.quote(ticker);
   const price = q.regularMarketPrice;
   if (typeof price !== "number" || !Number.isFinite(price)) {
     throw new Error(`No price returned for ${ticker}`);
