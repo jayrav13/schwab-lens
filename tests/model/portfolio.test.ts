@@ -16,7 +16,7 @@ function tx(overrides: Partial<Transaction>): Transaction {
 }
 
 describe("buildPortfolio", () => {
-  const config = { seedDate: "2026-01-15", seedValue: 12345 };
+  const config = { seedDate: "2026-01-15", seedValue: 12345, marketData: { enabled: false } };
 
   it("produces a seed-only state from no transactions", () => {
     const s = buildPortfolio([], config);

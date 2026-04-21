@@ -2,11 +2,26 @@ import { describe, it, expect } from "vitest";
 import { parseConfig } from "@/lib/config";
 
 describe("parseConfig", () => {
-  it("parses a valid config JSON", () => {
+  it("parses a valid config JSON with marketData disabled by default", () => {
     const c = parseConfig(
       JSON.stringify({ seedDate: "2026-01-15", seedValue: 12345 }),
     );
-    expect(c).toEqual({ seedDate: "2026-01-15", seedValue: 12345 });
+    expect(c).toEqual({
+      seedDate: "2026-01-15",
+      seedValue: 12345,
+      marketData: { enabled: false },
+    });
+  });
+
+  it("parses marketData.enabled=true when set", () => {
+    const c = parseConfig(
+      JSON.stringify({
+        seedDate: "2026-01-15",
+        seedValue: 12345,
+        marketData: { enabled: true },
+      }),
+    );
+    expect(c.marketData).toEqual({ enabled: true });
   });
 
   it("throws on missing seedDate", () => {

@@ -1,6 +1,10 @@
 import type { OptionLeg, Transaction } from "@/lib/csv/types";
 
-export type Config = { seedDate: string; seedValue: number };
+export type Config = {
+  seedDate: string;
+  seedValue: number;
+  marketData: { enabled: boolean };
+};
 
 export type CashPoint = { date: string; balance: number };
 export type FlowPoint = { date: string; signedAmount: number };
