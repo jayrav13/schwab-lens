@@ -187,14 +187,15 @@ The sections above are the canonical layout spec. A reference mockup was built d
 - `parseSchwabCsv` fixtures covering: `as of` dates, empty monetary fields, option-symbol parsing (including half-strikes like `$42.50`), cash-only rows, share Buy/Sell, embedded commas in Description, unknown `Action`.
 - `buildPortfolio` fixtures covering: put-assignment → share buy, call-assignment → share sell zero-out, SGOV same-day round-trip, external flow exclusion from return %.
 
-**Integration test:** parse the real sanitized CSV, build portfolio, assert:
+**Integration test:** parse the fully fictional `fake-portfolio.csv` fixture (14 rows, $10,000 seed, one complete wheel cycle on a fictional `ACME` ticker), build portfolio, assert:
 
-- Final NAV ≈ $28,609.85
-- Open contracts count = 5
-- Open share tickers ⊆ {HL, SOFI, CLSK}
-- Net premium ≈ $3,609
+- All rows parsed
+- Final NAV matches the deterministic walk-forward math
+- Open positions resolve to empty (full round-trip in the fixture)
+- Net premium matches the hand-computed total
+- No warnings
 
-**Fixtures:** live in `tests/fixtures/`. Small hand-built CSVs per scenario + one sanitized copy of the real export (ticker-level data is fine; no account numbers). These are source code and tracked in git.
+**Fixtures:** live in `tests/fixtures/`. Every fixture is hand-built and fictional — no real account exports, no real transaction history, no real tickers from the author's portfolio. This is so the repo is safe to share publicly or with collaborators.
 
 **Pre-commit:** lefthook runs `vitest run` and `tsc --noEmit`. Optional for v1; nice-to-have.
 
@@ -203,8 +204,8 @@ The sections above are the canonical layout spec. A reference mockup was built d
 Reinforcement of the rule in `CLAUDE.md`:
 
 - `data/`, `transactions/`, `sheets/` are gitignored and must stay so.
-- `*.csv` and `*.xlsx` are always considered sensitive — no exceptions.
-- Tests use *sanitized* fixtures only; real exports never go to the repo.
+- `*.csv` and `*.xlsx` outside `tests/fixtures/` are always considered sensitive — no exceptions.
+- Test fixtures under `tests/fixtures/*.csv` are the ONLY CSVs allowed in the repo, and each one must be fully fictional — hand-built, no real tickers from the author's portfolio, no real account data. This is what makes the repo safe to share.
 - Every commit and PR check must confirm no sensitive files are staged.
 
 ## Open questions — none

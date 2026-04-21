@@ -5,36 +5,56 @@ import { parseSchwabCsv } from "@/lib/csv/parse";
 import { buildPortfolio } from "@/lib/model/portfolio";
 import { loadDashboard } from "@/lib/server/dashboard";
 
-describe("integration: real sanitized CSV", () => {
+describe("integration: fake portfolio CSV", () => {
   const csv = readFileSync(
-    path.join(__dirname, "fixtures", "real-sanitized.csv"),
+    path.join(__dirname, "fixtures", "fake-portfolio.csv"),
     "utf8",
   );
   const txs = parseSchwabCsv(csv);
   const state = buildPortfolio(txs, {
     seedDate: "2026-01-15",
-    seedValue: 12345,
+    seedValue: 10000,
   });
 
-  it("parses all 174 data rows", () => {
-    expect(txs.length).toBe(174);
+  it("parses all 14 data rows", () => {
+    expect(txs.length).toBe(14);
   });
 
-  it("final NAV is approximately $28,609.85", () => {
-    expect(state.navSeries.at(-1)!.nav).toBeCloseTo(28609.85, 1);
+  it("final NAV is $10,637.58 after the complete wheel cycle", () => {
+    // $10,000 seed
+    // + $49.34 STO put + $78.67 STO puts
+    // + $0.25 bank interest
+    // − $4,400 put-assignment buy; +$4,400 cost-basis shares = NAV-neutral
+    // + $58.68 STO call (covered) + $2.00 dividend
+    // − $20.02 BTC call
+    // + $68.68 STO new call
+    // + $4,799.98 call-assignment sell; −$4,400 cost-basis shares
+    // + $500 − $500 external flows (net zero)
+    // = $10,637.58
+    expect(state.navSeries.at(-1)!.nav).toBeCloseTo(10637.58, 2);
   });
 
-  it("5 open option contracts remain", () => {
-    expect(state.openOptionPositions).toHaveLength(5);
+  it("has no open option positions (all closed via BTC / expired / assigned)", () => {
+    expect(state.openOptionPositions).toEqual([]);
   });
 
-  it("open share positions are HL, SOFI, CLSK only", () => {
-    const tickers = state.openSharePositions.map((p) => p.ticker).sort();
-    expect(tickers).toEqual(["CLSK", "HL", "SOFI"]);
+  it("has no open share positions (shares called away after assignment round-trip)", () => {
+    expect(state.openSharePositions).toEqual([]);
   });
 
-  it("net premium is approximately $3,609", () => {
-    expect(state.premiumTotals.net).toBeCloseTo(3609, 0);
+  it("net premium is $235.35", () => {
+    expect(state.premiumTotals.gross).toBeCloseTo(255.37, 2);
+    expect(state.premiumTotals.closed).toBeCloseTo(20.02, 2);
+    expect(state.premiumTotals.net).toBeCloseTo(235.35, 2);
+  });
+
+  it("external flows net to zero (paired journal + wire)", () => {
+    const cumulative = state.externalFlows.reduce(
+      (a, f) => a + f.signedAmount,
+      0,
+    );
+    expect(cumulative).toBe(0);
+    expect(state.externalFlows).toHaveLength(2);
   });
 
   it("no warnings (clean history)", () => {
