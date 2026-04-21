@@ -6,6 +6,11 @@ import { OpenPositionsCard } from "@/app/components/OpenPositionsCard";
 import { TransactionLogCard } from "@/app/components/TransactionLogCard";
 import { OnboardingCard } from "@/app/components/OnboardingCard";
 import { AttentionBanner } from "@/app/components/AttentionBanner";
+import { ReturnMetricsCard } from "@/app/components/ReturnMetricsCard";
+import { OutcomesCard } from "@/app/components/OutcomesCard";
+import { PremiumByTickerCard } from "@/app/components/PremiumByTickerCard";
+import { CashYieldCard } from "@/app/components/CashYieldCard";
+import { CapitalAtRiskCard } from "@/app/components/CapitalAtRiskCard";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +72,24 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <OpenPositionsCard state={state} asOfDate={asOfDate} />
         <TransactionLogCard transactions={state.transactions} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="md:col-span-2">
+          <ReturnMetricsCard state={state} />
+        </div>
+        <div>
+          <OutcomesCard state={state} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <PremiumByTickerCard state={state} />
+        <CashYieldCard state={state} />
+      </div>
+
+      <div className="mb-4">
+        <CapitalAtRiskCard state={state} />
       </div>
     </main>
   );
