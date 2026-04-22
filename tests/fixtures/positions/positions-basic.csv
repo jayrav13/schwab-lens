@@ -1,0 +1,8 @@
+"Positions for account Demo ...999 as of 03:14 PM ET, 2026/03/15"
+
+"Symbol","Description","Qty (Quantity)","Price","Price Chng % (Price Change %)","Price Chng $ (Price Change $)","Delta","ITM (In The Money)","Mkt Val (Market Value)","Theta","Day Chng % (Day Change %)","Day Chng $ (Day Change $)","Cost Basis","Gain $ (Gain/Loss $)","Gain % (Gain/Loss %)","Ratings","Reinvest?","Reinvest Capital Gains?","% of Acct (% of Account)","Intr Val (Intrinsic Value)","Asset Type",
+"ACME","ACME CORPORATION","100","50.00","0.00%","0.00","N/A","-","$5,000.00","N/A","0.00%","$0.00","$4,800.00","$200.00","4.17%","B","No","N/A","33.33%","-","Equity",
+"ACME 04/17/2026 55.00 C","CALL ACME CORP $55 EXP 04/17/26","-1","1.20","0.00%","0.00","0.3500","OTM","-$120.00","-0.0200","0.00%","$0.00","-$75.00","-$45.00","-60.00%","-","N/A","N/A","-","-$5.00","Option",
+"ACME 04/17/2026 45.00 P","PUT ACME CORP $45 EXP 04/17/26","-1","0.80","0.00%","0.00","-0.2500","OTM","-$80.00","-0.0300","0.00%","$0.00","-$40.00","-$40.00","-100.00%","-","N/A","N/A","-","-$5.00","Option",
+"Cash & Cash Investments","--","--","--","--","--","--","--","$10,200.00","--","0.00%","$0.00","--","--","--","--","--","--","66.67%","--","Cash and Money Market",
+"Positions Total","","--","--","--","--","--","--","$15,000.00","--","0.00%","$0.00","$4,685.00","$115.00","0.77%","--","--","--","--","--","--",

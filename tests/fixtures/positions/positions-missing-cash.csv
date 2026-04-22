@@ -1,0 +1,5 @@
+"Positions for account Demo ...999 as of 03:14 PM ET, 2026/03/15"
+
+"Symbol","Description","Qty (Quantity)","Price","Price Chng % (Price Change %)","Price Chng $ (Price Change $)","Delta","ITM (In The Money)","Mkt Val (Market Value)","Theta","Day Chng % (Day Change %)","Day Chng $ (Day Change $)","Cost Basis","Gain $ (Gain/Loss $)","Gain % (Gain/Loss %)","Ratings","Reinvest?","Reinvest Capital Gains?","% of Acct (% of Account)","Intr Val (Intrinsic Value)","Asset Type",
+"ACME","ACME CORPORATION","100","50.00","0.00%","0.00","N/A","-","$5,000.00","N/A","0.00%","$0.00","$4,800.00","$200.00","4.17%","B","No","N/A","33.33%","-","Equity",
+"Positions Total","","--","--","--","--","--","--","$5,000.00","--","0.00%","$0.00","$4,800.00","$200.00","4.17%","--","--","--","--","--","--",

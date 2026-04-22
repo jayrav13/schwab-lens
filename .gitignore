@@ -11,7 +11,7 @@
 *.xlsx
 
 # Allow hand-built test fixtures (no real data)
-!tests/fixtures/*.csv
+!tests/fixtures/**/*.csv
 
 # dependencies
 /node_modules
