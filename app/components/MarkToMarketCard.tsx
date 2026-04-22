@@ -4,7 +4,7 @@ import { formatCurrency } from "@/lib/util/money";
 type Props = { markToMarket: MarkToMarket };
 
 export function MarkToMarketCard({ markToMarket }: Props) {
-  const { rows, missingQuotes } = markToMarket;
+  const { rows, missingQuotes, optionRows } = markToMarket;
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
@@ -54,6 +54,51 @@ export function MarkToMarketCard({ markToMarket }: Props) {
             </div>
           );
         })
+      )}
+
+      {optionRows && optionRows.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-neutral-800">
+          <div className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1">
+            Open option contracts (Schwab marks)
+          </div>
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr className="text-left text-[11px] text-gray-500 dark:text-gray-400">
+                <th className="py-1 font-normal">Contract</th>
+                <th className="py-1 text-right font-normal">Qty</th>
+                <th className="py-1 text-right font-normal">Mark</th>
+                <th className="py-1 text-right font-normal">Value</th>
+                <th className="py-1 text-right font-normal">Δ</th>
+                <th className="py-1 text-right font-normal">Θ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {optionRows.map((o) => (
+                <tr
+                  key={`${o.underlying}|${o.expiry}|${o.strike}|${o.callPut}`}
+                  className="border-t border-gray-100 dark:border-neutral-800"
+                >
+                  <td className="py-1">
+                    {o.underlying} {o.expiry} {o.strike} {o.callPut}
+                  </td>
+                  <td className="py-1 text-right tabular-nums">{o.quantity}</td>
+                  <td className="py-1 text-right tabular-nums">
+                    {formatCurrency(o.price)}
+                  </td>
+                  <td className="py-1 text-right tabular-nums">
+                    {formatCurrency(o.marketValue)}
+                  </td>
+                  <td className="py-1 text-right tabular-nums">
+                    {o.delta?.toFixed(2) ?? "—"}
+                  </td>
+                  <td className="py-1 text-right tabular-nums">
+                    {o.theta?.toFixed(2) ?? "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
