@@ -1,0 +1,4 @@
+"Date","Action","Symbol","Description","Quantity","Price","Fees & Comm","Amount"
+"02/15/2026","Buy to Close","ACME 02/20/2026 50.00 C","CALL ACME CORP $50 EXP 02/20/26","1","$0.20","$0.66","-$20.66"
+"02/10/2026","Sell to Open","ACME 02/20/2026 50.00 C","CALL ACME CORP $50 EXP 02/20/26","1","$1.00","$0.66","$99.34"
+"02/05/2026","Qualified Dividend","ACME","ACME CORPORATION","","","","$2.00"
