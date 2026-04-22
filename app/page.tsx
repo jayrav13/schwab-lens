@@ -37,7 +37,7 @@ export default async function Home() {
     );
   }
 
-  const { state, sourceFile, loadedAt, markToMarket } = data;
+  const { state, sourceFiles, loadedAt, markToMarket } = data;
   const asOfDate =
     state.navSeries.at(-1)?.date ?? state.config.seedDate;
 
@@ -49,7 +49,7 @@ export default async function Home() {
           <div className="text-xs text-gray-500 dark:text-gray-400">
             Seed ${state.config.seedValue.toLocaleString()} on{" "}
             {state.config.seedDate} · Data through {asOfDate} · Source:{" "}
-            <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">{sourceFile}</code>
+            <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">{sourceFiles.transactions.length} transactions · {sourceFiles.positions.length} positions</code>
           </div>
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400">

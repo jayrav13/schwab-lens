@@ -1,6 +1,8 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { parseSchwabCsv } from "@/lib/csv/parse";
+import { loadTransactionsFromDir } from "@/lib/csv/load";
+import { loadPositionsFromDir, latest, earliest } from "@/lib/positions/load";
+import { buildSeedFromSnapshot } from "@/lib/positions/seed";
 import { buildPortfolio, seedFromConfig } from "@/lib/model/portfolio";
 import { readConfigFile } from "@/lib/config";
 import { fetchQuotes, type Quote } from "@/lib/market/quotes";
@@ -9,14 +11,16 @@ import {
   type MarkToMarket,
 } from "@/lib/model/metrics/mark_to_market";
 import type { PortfolioState } from "@/lib/model/types";
+import type { PositionsSnapshot } from "@/lib/positions/types";
 
 export type DashboardData =
   | {
       kind: "ready";
       state: PortfolioState;
-      sourceFile: string;
+      sourceFiles: { transactions: string[]; positions: string[] };
       loadedAt: string;
       markToMarket: MarkToMarket | null;
+      latestSnapshot: PositionsSnapshot | null;
     }
   | { kind: "no-csv"; dataDir: string }
   | { kind: "no-config"; dataDir: string }
@@ -27,45 +31,62 @@ export async function loadDashboard(): Promise<DashboardData> {
   const config = readConfigFile(dataDir);
   if (!config) return { kind: "no-config", dataDir };
 
-  let files: string[];
-  try {
-    files = readdirSync(dataDir)
-      .filter((f) => f.toLowerCase().endsWith(".csv"))
-      .map((f) => path.join(dataDir, f));
-  } catch {
-    return { kind: "no-csv", dataDir };
-  }
-  if (files.length === 0) return { kind: "no-csv", dataDir };
-
-  const newest = files
-    .map((f) => ({ f, mtime: statSync(f).mtimeMs }))
-    .sort((a, b) => b.mtime - a.mtime)[0].f;
+  const transactionsDir = path.join(dataDir, "transactions");
+  const positionsDir = path.join(dataDir, "positions");
 
   try {
-    const csv = readFileSync(newest, "utf8");
-    const txs = parseSchwabCsv(csv);
-    const state = buildPortfolio(txs, config, seedFromConfig(config));
+    const transactions = loadTransactionsFromDir(transactionsDir);
+    const snapshots = loadPositionsFromDir(positionsDir);
+
+    if (transactions.length === 0 && snapshots.length === 0) {
+      return { kind: "no-csv", dataDir };
+    }
+
+    const earliestSnap = earliest(snapshots);
+    const latestSnap = latest(snapshots);
+    const seed = earliestSnap
+      ? buildSeedFromSnapshot(earliestSnap)
+      : seedFromConfig(config);
+
+    const state = buildPortfolio(transactions, config, seed);
 
     let markToMarket: MarkToMarket | null = null;
-    if (config.marketData.enabled && state.openSharePositions.length > 0) {
-      const tickers = state.openSharePositions.map((s) => s.ticker);
-      const results = await fetchQuotes(tickers);
+    if (
+      config.marketData.enabled &&
+      (state.openSharePositions.length > 0 || latestSnap !== null)
+    ) {
+      const snapSymbols = new Set(
+        (latestSnap?.shares ?? []).map((s) => s.ticker),
+      );
+      const missing = state.openSharePositions
+        .map((s) => s.ticker)
+        .filter((t) => !snapSymbols.has(t));
+
       const quoteMap: Record<string, Quote | null> = {};
-      for (const r of results) {
-        if (r.kind === "ok") quoteMap[r.quote.ticker] = r.quote;
+      if (missing.length > 0) {
+        const results = await fetchQuotes(missing);
+        for (const r of results) {
+          if (r.kind === "ok") quoteMap[r.quote.ticker] = r.quote;
+        }
+        for (const t of missing) if (!(t in quoteMap)) quoteMap[t] = null;
       }
-      for (const t of tickers) {
-        if (!(t in quoteMap)) quoteMap[t] = null;
-      }
-      markToMarket = computeMarkToMarket(state, quoteMap);
+      markToMarket = computeMarkToMarket(
+        state,
+        quoteMap,
+        latestSnap ?? undefined,
+      );
     }
 
     return {
       kind: "ready",
       state,
-      sourceFile: path.basename(newest),
+      sourceFiles: {
+        transactions: listCsvFiles(transactionsDir),
+        positions: snapshots.map((s) => s.sourceFile),
+      },
       loadedAt: new Date().toISOString(),
       markToMarket,
+      latestSnapshot: latestSnap,
     };
   } catch (err) {
     return {
@@ -73,4 +94,11 @@ export async function loadDashboard(): Promise<DashboardData> {
       message: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+function listCsvFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => f.toLowerCase().endsWith(".csv"))
+    .sort();
 }
