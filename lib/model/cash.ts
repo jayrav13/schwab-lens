@@ -1,9 +1,9 @@
 import type { Transaction } from "@/lib/csv/types";
-import type { CashPoint, Config, FlowPoint } from "@/lib/model/types";
+import type { CashPoint, FlowPoint, Seed } from "@/lib/model/types";
 
 export function computeCashLedger(
   txs: Transaction[],
-  config: Config,
+  seed: Seed,
 ): {
   cashLedger: CashPoint[];
   externalFlows: FlowPoint[];
@@ -15,10 +15,10 @@ export function computeCashLedger(
   );
 
   const cashLedger: CashPoint[] = [
-    { date: config.seedDate, balance: config.seedValue },
+    { date: seed.asOf, balance: seed.cash },
   ];
   const externalFlows: FlowPoint[] = [];
-  let balance = config.seedValue;
+  let balance = seed.cash;
   let cumulativeExternal = 0;
 
   let dayGroup: string | null = null;

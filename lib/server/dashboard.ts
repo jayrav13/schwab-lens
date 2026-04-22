@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { parseSchwabCsv } from "@/lib/csv/parse";
-import { buildPortfolio } from "@/lib/model/portfolio";
+import { buildPortfolio, seedFromConfig } from "@/lib/model/portfolio";
 import { readConfigFile } from "@/lib/config";
 import { fetchQuotes, type Quote } from "@/lib/market/quotes";
 import {
@@ -44,7 +44,7 @@ export async function loadDashboard(): Promise<DashboardData> {
   try {
     const csv = readFileSync(newest, "utf8");
     const txs = parseSchwabCsv(csv);
-    const state = buildPortfolio(txs, config);
+    const state = buildPortfolio(txs, config, seedFromConfig(config));
 
     let markToMarket: MarkToMarket | null = null;
     if (config.marketData.enabled && state.openSharePositions.length > 0) {

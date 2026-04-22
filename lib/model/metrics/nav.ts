@@ -1,18 +1,30 @@
 import type { Transaction } from "@/lib/csv/types";
-import type { Config, NavPoint } from "@/lib/model/types";
+import type { NavPoint, Seed } from "@/lib/model/types";
 
 export function computeNavSeries(
   txs: Transaction[],
-  config: Config,
+  seed: Seed,
 ): NavPoint[] {
   const sorted = [...txs].sort((a, b) =>
     a.tradeDate < b.tradeDate ? -1 : a.tradeDate > b.tradeDate ? 1 : 0,
   );
 
   const shares = new Map<string, { qty: number; cost: number }>();
-  let cash = config.seedValue;
+  for (const s of seed.initialShares) {
+    shares.set(s.ticker, {
+      qty: s.shares,
+      cost: s.shares * s.costBasis,
+    });
+  }
+  let cash = seed.cash;
 
-  const series: NavPoint[] = [{ date: config.seedDate, nav: cash }];
+  let initialSharesValue = 0;
+  for (const s of shares.values()) {
+    if (s.qty > 0) initialSharesValue += s.cost;
+  }
+  const series: NavPoint[] = [
+    { date: seed.asOf, nav: cash + initialSharesValue },
+  ];
   let currentDate: string | null = null;
 
   for (const t of sorted) {

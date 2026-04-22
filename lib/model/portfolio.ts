@@ -2,6 +2,7 @@ import type { Transaction } from "@/lib/csv/types";
 import type {
   Config,
   PortfolioState,
+  Seed,
   Warning,
 } from "@/lib/model/types";
 import { computeCashLedger } from "@/lib/model/cash";
@@ -17,16 +18,27 @@ import {
 
 const CASH_DRIFT_TOLERANCE = 0.01;
 
+export function seedFromConfig(config: Config): Seed {
+  return {
+    asOf: config.seedDate,
+    cash: config.seedValue,
+    initialShares: [],
+    initialOptions: [],
+  };
+}
+
 export function buildPortfolio(
   transactions: Transaction[],
   config: Config,
+  seed: Seed,
 ): PortfolioState {
   const warnings: Warning[] = [];
 
-  const cash = computeCashLedger(transactions, config);
+  const txs = transactions.filter((t) => t.tradeDate >= seed.asOf);
 
-  const expected =
-    config.seedValue + transactions.reduce((acc, t) => acc + t.amount, 0);
+  const cash = computeCashLedger(txs, seed);
+
+  const expected = seed.cash + txs.reduce((acc, t) => acc + t.amount, 0);
   if (Math.abs(expected - cash.finalCash) > CASH_DRIFT_TOLERANCE) {
     warnings.push({
       kind: "CashDrift",
@@ -35,18 +47,17 @@ export function buildPortfolio(
     });
   }
 
-  const { openShares, warnings: shareWarnings } =
-    computeShareLedger(transactions);
+  const { openShares, warnings: shareWarnings } = computeShareLedger(txs, seed);
   warnings.push(...shareWarnings);
-  const openOptions = computeOpenOptions(transactions);
+  const openOptions = computeOpenOptions(txs, seed);
 
-  const navSeries = computeNavSeries(transactions, config);
+  const navSeries = computeNavSeries(txs, seed);
 
-  const premiumSeries = computePremiumSeries(transactions);
-  const premiumTotals = computePremiumTotals(transactions);
+  const premiumSeries = computePremiumSeries(txs);
+  const premiumTotals = computePremiumTotals(txs);
 
   const unknownCounts = new Map<string, number>();
-  for (const t of transactions) {
+  for (const t of txs) {
     if (t.action === "Unknown") {
       unknownCounts.set(t.rawAction, (unknownCounts.get(t.rawAction) ?? 0) + 1);
     }
@@ -55,9 +66,9 @@ export function buildPortfolio(
     warnings.push({ kind: "UnknownAction", rawAction, count });
   }
 
-  for (const t of transactions) {
+  for (const t of txs) {
     if (t.action !== "Assigned" || !t.option) continue;
-    const paired = transactions.find(
+    const paired = txs.find(
       (o) =>
         o.tradeDate === t.tradeDate &&
         o.ticker === t.option!.ticker &&
@@ -75,7 +86,7 @@ export function buildPortfolio(
 
   return {
     config,
-    transactions,
+    transactions: txs,
     cashLedger: cash.cashLedger,
     externalFlows: cash.externalFlows,
     navSeries,

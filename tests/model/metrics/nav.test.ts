@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { computeNavSeries } from "@/lib/model/metrics/nav";
 import type { Transaction } from "@/lib/csv/types";
+import type { Seed } from "@/lib/model/types";
 
 function tx(overrides: Partial<Transaction>): Transaction {
   return {
@@ -15,20 +16,20 @@ function tx(overrides: Partial<Transaction>): Transaction {
   };
 }
 
+function seed(asOf: string, cash: number): Seed {
+  return { asOf, cash, initialShares: [], initialOptions: [] };
+}
+
 describe("computeNavSeries", () => {
   it("starts at seed value on seed date", () => {
-    const series = computeNavSeries([], {
-      seedDate: "2026-01-15",
-      seedValue: 12345,
-      marketData: { enabled: false },
-    });
+    const series = computeNavSeries([], seed("2026-01-15", 12345));
     expect(series).toEqual([{ date: "2026-01-15", nav: 12345 }]);
   });
 
   it("adds realized cash flows", () => {
     const series = computeNavSeries(
       [tx({ amount: 100, tradeDate: "2026-01-05" })],
-      { seedDate: "2026-01-15", seedValue: 12345, marketData: { enabled: false } },
+      seed("2026-01-15", 12345),
     );
     expect(series.at(-1)).toEqual({ date: "2026-01-05", nav: 25100 });
   });
@@ -46,7 +47,7 @@ describe("computeNavSeries", () => {
           tradeDate: "2026-01-30",
         }),
       ],
-      { seedDate: "2026-01-15", seedValue: 12345, marketData: { enabled: false } },
+      seed("2026-01-15", 12345),
     );
     expect(series.at(-1)?.nav).toBeCloseTo(12345, 2);
   });

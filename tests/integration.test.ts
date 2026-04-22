@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { parseSchwabCsv } from "@/lib/csv/parse";
-import { buildPortfolio } from "@/lib/model/portfolio";
+import { buildPortfolio, seedFromConfig } from "@/lib/model/portfolio";
 import { loadDashboard } from "@/lib/server/dashboard";
 
 describe("integration: fake portfolio CSV", () => {
@@ -11,11 +11,12 @@ describe("integration: fake portfolio CSV", () => {
     "utf8",
   );
   const txs = parseSchwabCsv(csv);
-  const state = buildPortfolio(txs, {
+  const config = {
     seedDate: "2026-01-15",
     seedValue: 10000,
     marketData: { enabled: false },
-  });
+  };
+  const state = buildPortfolio(txs, config, seedFromConfig(config));
 
   it("parses all 14 data rows", () => {
     expect(txs.length).toBe(14);

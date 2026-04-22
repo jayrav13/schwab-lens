@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPortfolio } from "@/lib/model/portfolio";
+import { buildPortfolio, seedFromConfig } from "@/lib/model/portfolio";
 import type { Transaction } from "@/lib/csv/types";
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -17,9 +17,10 @@ function tx(overrides: Partial<Transaction>): Transaction {
 
 describe("buildPortfolio", () => {
   const config = { seedDate: "2026-01-15", seedValue: 12345, marketData: { enabled: false } };
+  const seed = seedFromConfig(config);
 
   it("produces a seed-only state from no transactions", () => {
-    const s = buildPortfolio([], config);
+    const s = buildPortfolio([], config, seed);
     expect(s.cashLedger).toEqual([
       { date: "2026-01-15", balance: 12345 },
     ]);
@@ -42,6 +43,7 @@ describe("buildPortfolio", () => {
         tx({ amount: 100, tradeDate: "2026-02-10" }),
       ],
       config,
+      seed,
     );
     expect(s.navSeries.at(-1)!.nav).toBeCloseTo(25100, 2);
   });
@@ -53,6 +55,7 @@ describe("buildPortfolio", () => {
         tx({ action: "Unknown", rawAction: "Merger Adjustment", amount: 45 }),
       ],
       config,
+      seed,
     );
     const w = s.warnings.find((w) => w.kind === "UnknownAction");
     expect(w).toBeDefined();
@@ -80,9 +83,22 @@ describe("buildPortfolio", () => {
         }),
       ],
       config,
+      seed,
     );
     expect(
       s.warnings.some((w) => w.kind === "UnpairedAssignment"),
     ).toBe(true);
+  });
+
+  it("drops transactions that predate the seed date", () => {
+    const s = buildPortfolio(
+      [
+        tx({ amount: 99999, tradeDate: "2025-12-31" }),
+        tx({ amount: 100, tradeDate: "2026-01-05" }),
+      ],
+      config,
+      seed,
+    );
+    expect(s.cashLedger.at(-1)?.balance).toBe(25100);
   });
 });

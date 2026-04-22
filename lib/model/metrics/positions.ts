@@ -1,11 +1,20 @@
 import type { Transaction, OptionLeg } from "@/lib/csv/types";
-import type { OpenOption, OpenShare, Warning } from "@/lib/model/types";
+import type { OpenOption, OpenShare, Seed, Warning } from "@/lib/model/types";
 
-export function computeShareLedger(txs: Transaction[]): {
+export function computeShareLedger(
+  txs: Transaction[],
+  seed: Seed,
+): {
   openShares: OpenShare[];
   warnings: Warning[];
 } {
   const state = new Map<string, { shares: number; cost: number }>();
+  for (const s of seed.initialShares) {
+    state.set(s.ticker, {
+      shares: s.shares,
+      cost: s.shares * s.costBasis,
+    });
+  }
   const warnings: Warning[] = [];
 
   const sorted = [...txs].sort((a, b) =>
@@ -29,7 +38,10 @@ export function computeShareLedger(txs: Transaction[]): {
     state.set(t.ticker, s);
   }
 
-  // End-of-day negativity check: re-walk, segment by date.
+  const running = new Map<string, number>();
+  for (const s of seed.initialShares) {
+    running.set(s.ticker, s.shares);
+  }
   const perDate = new Map<string, Map<string, number>>();
   for (const t of sorted) {
     if ((t.action !== "Buy" && t.action !== "Sell") || !t.ticker) continue;
@@ -39,7 +51,6 @@ export function computeShareLedger(txs: Transaction[]): {
     perDate.set(t.tradeDate, day);
   }
 
-  const running = new Map<string, number>();
   for (const [date, deltas] of [...perDate.entries()].sort()) {
     for (const [ticker, delta] of deltas) {
       const next = (running.get(ticker) ?? 0) + delta;
@@ -74,7 +85,10 @@ function contractKey(o: OptionLeg): string {
   return `${o.ticker}|${o.expiry}|${o.strike}|${o.type}`;
 }
 
-export function computeOpenOptions(txs: Transaction[]): OpenOption[] {
+export function computeOpenOptions(
+  txs: Transaction[],
+  seed: Seed,
+): OpenOption[] {
   const byKey = new Map<
     string,
     {
@@ -84,6 +98,15 @@ export function computeOpenOptions(txs: Transaction[]): OpenOption[] {
       entries: OpenOption["entries"];
     }
   >();
+
+  for (const o of seed.initialOptions) {
+    byKey.set(contractKey(o.contract), {
+      contract: o.contract,
+      quantityOpen: o.quantityOpen,
+      netPremiumCollected: o.netPremiumCollected,
+      entries: [...o.entries],
+    });
+  }
 
   const sorted = [...txs].sort((a, b) =>
     a.tradeDate < b.tradeDate ? -1 : a.tradeDate > b.tradeDate ? 1 : 0,

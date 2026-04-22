@@ -42,3 +42,5 @@ export type PortfolioState = {
   premiumTotals: { gross: number; closed: number; net: number };
   warnings: Warning[];
 };
+
+export type { Seed } from "@/lib/positions/types";
