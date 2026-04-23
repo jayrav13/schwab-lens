@@ -4,7 +4,7 @@
 
 **Goal:** Integrate Schwab's Positions CSV into the Demo dashboard as a snapshot source alongside the existing Transactions CSV stream, so that the earliest snapshot seeds the portfolio and the latest snapshot anchors current cash, share marks, and option marks.
 
-**Architecture:** `data/` gains two subdirectories (`transactions/` and `positions/`). A new positions parser + multi-file loader reads all snapshots, sorted by `asOf`. The transactions loader grows a dedup step so overlapping exports are idempotent. The portfolio builder accepts a `Seed` (earliest snapshot → `Seed`, or `Config` fallback). Mark-to-market prefers snapshot prices and gains an options section. A user-level Claude skill (`/ingest`) moves downloaded CSVs into the right subdir.
+**Architecture:** `data/` gains two subdirectories (`transactions/` and `positions/`). A new positions parser + multi-file loader reads all snapshots, sorted by `asOf`. The transactions loader grows a dedup step so overlapping exports are idempotent. The portfolio builder accepts a `Seed` (earliest snapshot → `Seed`, or `Config` fallback). Mark-to-market prefers snapshot prices and gains an options section. A repo-local Claude skill (`/ingest` at `.claude/skills/ingest/`) moves downloaded CSVs into the right subdir.
 
 **Tech Stack:** Next.js 16 App Router, TypeScript 5, Vitest, Papaparse. No new dependencies.
 
@@ -37,7 +37,7 @@
 - `tests/fixtures/positions/positions-day-2.csv`
 - `tests/fixtures/transactions-overlap/overlap-a.csv`
 - `tests/fixtures/transactions-overlap/overlap-b.csv`
-- `~/.claude/skills/ingest/SKILL.md`
+- `.claude/skills/ingest/SKILL.md`
 
 **Modify:**
 - `lib/model/types.ts` — add `Seed` import re-export; keep `Config` unchanged
@@ -2075,34 +2075,34 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 11: The `/ingest` skill
 
 **Files:**
-- Create: `~/.claude/skills/ingest/SKILL.md`
+- Create: `.claude/skills/ingest/SKILL.md` (repo-local — per user preference, custom schwab-lens skills live in `.claude/skills/`, not `~/.claude/skills/`)
 
 - [ ] **Step 1: Confirm skills dir exists**
 
-Run: `ls -d ~/.claude/skills 2>/dev/null || mkdir -p ~/.claude/skills`
+Run: `mkdir -p .claude/skills/ingest`
 
 - [ ] **Step 2: Create the skill**
 
-Write `~/.claude/skills/ingest/SKILL.md`:
+Write `.claude/skills/ingest/SKILL.md`. Because the skill lives in the repo, Claude Code sessions for this project have CWD = repo root, so use relative paths:
 
 ```markdown
 ---
 name: ingest
-description: Move Schwab Demo Transactions and Positions CSVs from ~/Downloads into the schwab-lens repo data/ subdirectories. Use when the user says "ingest my schwab-lens", "move schwab-lens downloads", invokes /ingest, or has just downloaded Schwab exports they want in the repo.
+description: Move Schwab Demo Transactions and Positions CSVs from ~/Downloads into this repo's data/ subdirectories. Use when the user says "ingest my schwab-lens", "move schwab-lens downloads", invokes /ingest, or has just downloaded Schwab exports they want in the repo.
 ---
 
 # Demo — ingest downloaded CSVs
 
-Move any Schwab Demo CSVs sitting in `~/Downloads` into the correct subdirectory of the schwab-lens repo. Safe to re-run: uses `mv -n` (no-clobber) so nothing is overwritten.
+Move any Schwab Demo CSVs sitting in `~/Downloads` into the correct subdirectory of this repo. Safe to re-run: uses `mv -n` (no-clobber) so nothing is overwritten.
 
-**Target repo:** `~/Code/schwab-lens`
+Assume the repo root is the current working directory.
 
 Execute these steps in order.
 
 1. Ensure the destination dirs exist:
 
    ```bash
-   mkdir -p ~/Code/schwab-lens/data/transactions ~/Code/schwab-lens/data/positions
+   mkdir -p data/transactions data/positions
    ```
 
 2. Move Transactions CSVs:
@@ -2110,7 +2110,7 @@ Execute these steps in order.
    ```bash
    for f in ~/Downloads/Demo*Transactions*.csv; do
      [ -e "$f" ] || continue
-     mv -n "$f" ~/Code/schwab-lens/data/transactions/
+     mv -n "$f" data/transactions/
    done
    ```
 
@@ -2119,7 +2119,7 @@ Execute these steps in order.
    ```bash
    for f in ~/Downloads/Demo*Positions*.csv; do
      [ -e "$f" ] || continue
-     mv -n "$f" ~/Code/schwab-lens/data/positions/
+     mv -n "$f" data/positions/
    done
    ```
 
@@ -2127,10 +2127,10 @@ Execute these steps in order.
 
    ```bash
    echo "== data/transactions =="
-   ls -1 ~/Code/schwab-lens/data/transactions/ || true
+   ls -1 data/transactions/ || true
    echo "== data/positions =="
-   ls -1 ~/Code/schwab-lens/data/positions/ || true
-   echo "== ~/Downloads (remaining Demo files, if any, were kept because a same-name file already existed at the destination) =="
+   ls -1 data/positions/ || true
+   echo "== ~/Downloads (remaining Demo files were kept because a same-name file already existed at the destination) =="
    ls -1 ~/Downloads/ 2>/dev/null | grep -E '^Demo' || echo "(none)"
    ```
 
@@ -2139,11 +2139,18 @@ Never commit or push — the user runs those manually. This skill only moves fil
 
 - [ ] **Step 3: Verify the skill loads**
 
-In a fresh Claude Code session (or `/skills` listing), confirm `ingest` appears. Manual check: type `/ingest` and verify it runs the four steps above.
+In a fresh Claude Code session in this repo, confirm `ingest` appears in the available skills list. Manual check: type `/ingest` and verify it runs the four steps above.
 
-- [ ] **Step 4: No commit**
+- [ ] **Step 4: Commit**
 
-The skill lives in `~/.claude/skills/`, outside the repo. Nothing to commit.
+The skill lives inside the repo and should be tracked:
+
+```bash
+git add .claude/skills/ingest/SKILL.md
+git commit -m "Add ingest skill
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
 
 ---
 
@@ -2192,7 +2199,7 @@ gh pr create --title "Integrate Schwab Positions CSV" --body "$(cat <<'EOF'
 - Earliest Positions snapshot seeds the portfolio (replaces hardcoded config seed when present).
 - Latest Positions snapshot anchors current cash, share marks, and option marks.
 - MarkToMarket prefers Schwab's snapshot prices over yfinance; yfinance fills gaps.
-- New `/ingest` skill (user-level) moves `~/Downloads/Demo*.csv` into the right subdir.
+- New `/ingest` skill (repo-local, at `.claude/skills/ingest/`) moves `~/Downloads/Demo*.csv` into the right subdir.
 
 ## Test plan
 - [x] Vitest: parser, loaders, seed builder, portfolio, MTM — all pass
