@@ -1,9 +1,10 @@
-"use client";
-import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { Transaction } from "@/lib/csv/types";
 import { formatCurrency } from "@/lib/util/money";
 
 type Props = { transactions: Transaction[] };
+
+const PREVIEW_COUNT = 10;
 
 const ACTION_LABEL: Record<string, string> = {
   SellToOpen: "STO",
@@ -31,88 +32,44 @@ const ACTION_STYLES: Record<string, string> = {
   Sell: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200",
 };
 
-export function TransactionLogCard({ transactions }: Props) {
-  const [search, setSearch] = useState("");
-  const [action, setAction] = useState<string>("All");
-  const [limit, setLimit] = useState(20);
-
-  const sorted = useMemo(
-    () =>
-      [...transactions].sort((a, b) =>
-        a.tradeDate < b.tradeDate ? 1 : a.tradeDate > b.tradeDate ? -1 : 0,
-      ),
-    [transactions],
-  );
-
-  const actionOptions = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const t of sorted) {
-      if (!seen.has(t.action)) seen.set(t.action, t.rawAction);
-    }
-    return [["All", "All"] as [string, string], ...seen.entries()];
-  }, [sorted]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return sorted.filter((t) => {
-      if (action !== "All" && t.action !== action) return false;
-      if (!q) return true;
-      const hay = `${t.ticker ?? ""} ${t.raw.Description ?? ""}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [sorted, search, action]);
-
-  const visible = filtered.slice(0, limit);
-
-  function describe(t: Transaction): string {
-    if (t.option) {
-      const e = `${t.option.expiry.slice(5, 7)}/${t.option.expiry.slice(8, 10)}`;
-      return `${t.option.ticker} ${e} $${t.option.strike.toFixed(2)} ${t.option.type[0]} × ${t.quantity}`;
-    }
-    if (t.ticker) {
-      return `${t.ticker} ${t.quantity ? `× ${t.quantity}` : ""}`;
-    }
-    return t.raw.Description ?? t.rawAction;
+function describe(t: Transaction): string {
+  if (t.option) {
+    const e = `${t.option.expiry.slice(5, 7)}/${t.option.expiry.slice(8, 10)}`;
+    return `${t.option.ticker} ${e} $${t.option.strike.toFixed(2)} ${t.option.type[0]} × ${t.quantity}`;
   }
+  if (t.ticker) {
+    return `${t.ticker} ${t.quantity ? `× ${t.quantity}` : ""}`;
+  }
+  return t.raw.Description ?? t.rawAction;
+}
+
+export function TransactionLogCard({ transactions }: Props) {
+  const sorted = [...transactions].sort((a, b) =>
+    a.tradeDate < b.tradeDate ? 1 : a.tradeDate > b.tradeDate ? -1 : 0,
+  );
+  const preview = sorted.slice(0, PREVIEW_COUNT);
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200 mb-0.5">
-        Transaction log
-      </h3>
+      <div className="flex items-baseline justify-between mb-0.5">
+        <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200">
+          Transaction log
+        </h3>
+        {sorted.length > 0 && (
+          <Link
+            href="/transactions"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+          >
+            View all {sorted.length} →
+          </Link>
+        )}
+      </div>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-        Searchable. Most recent first. Showing {visible.length} of{" "}
-        {filtered.length}.
+        Most recent {preview.length} of {sorted.length}.
       </p>
 
-      <div className="flex gap-2 mb-2">
-        <input
-          placeholder="search ticker or description…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setLimit(20);
-          }}
-          className="flex-1 text-xs px-2 py-1.5 border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
-        />
-        <select
-          value={action}
-          onChange={(e) => {
-            setAction(e.target.value);
-            setLimit(20);
-          }}
-          className="text-xs px-2 py-1.5 border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
-        >
-          {actionOptions.map(([value, display]) => (
-            <option key={value} value={value}>
-              {display}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div>
-        {visible.map((t, i) => (
+        {preview.map((t, i) => (
           <div
             key={i}
             className="grid grid-cols-[72px_1fr_100px] gap-2 py-1.5 border-b border-gray-100 dark:border-neutral-800 last:border-0 text-xs"
@@ -145,15 +102,6 @@ export function TransactionLogCard({ transactions }: Props) {
           </div>
         ))}
       </div>
-
-      {limit < filtered.length && (
-        <button
-          onClick={() => setLimit(limit + 20)}
-          className="mt-3 text-xs px-3 py-1.5 border border-gray-300 dark:border-neutral-700 rounded hover:bg-gray-50 dark:hover:bg-neutral-800"
-        >
-          Show more
-        </button>
-      )}
     </div>
   );
 }
