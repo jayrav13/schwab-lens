@@ -46,3 +46,64 @@ describe("parseConfig", () => {
     expect(() => parseConfig("not json")).toThrow();
   });
 });
+
+describe("parseConfig benchmark field", () => {
+  it("omits benchmark when the field is absent", () => {
+    const cfg = parseConfig(
+      JSON.stringify({
+        seedDate: "2026-01-15",
+        seedValue: 12345,
+        marketData: { enabled: true },
+      }),
+    );
+    expect(cfg.benchmark).toBeUndefined();
+  });
+
+  it("accepts a non-empty string benchmark", () => {
+    const cfg = parseConfig(
+      JSON.stringify({
+        seedDate: "2026-01-15",
+        seedValue: 12345,
+        marketData: { enabled: true },
+        benchmark: "SPY",
+      }),
+    );
+    expect(cfg.benchmark).toBe("SPY");
+  });
+
+  it("accepts explicit null as off", () => {
+    const cfg = parseConfig(
+      JSON.stringify({
+        seedDate: "2026-01-15",
+        seedValue: 12345,
+        marketData: { enabled: true },
+        benchmark: null,
+      }),
+    );
+    expect(cfg.benchmark).toBeNull();
+  });
+
+  it("treats a non-string, non-null benchmark as undefined", () => {
+    const cfg = parseConfig(
+      JSON.stringify({
+        seedDate: "2026-01-15",
+        seedValue: 12345,
+        marketData: { enabled: true },
+        benchmark: 42,
+      }),
+    );
+    expect(cfg.benchmark).toBeUndefined();
+  });
+
+  it("treats an empty string benchmark as undefined", () => {
+    const cfg = parseConfig(
+      JSON.stringify({
+        seedDate: "2026-01-15",
+        seedValue: 12345,
+        marketData: { enabled: true },
+        benchmark: "",
+      }),
+    );
+    expect(cfg.benchmark).toBeUndefined();
+  });
+});

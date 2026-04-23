@@ -7,6 +7,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 export function parseConfig(json: string): Config {
   const parsed = JSON.parse(json) as Partial<Config> & {
     marketData?: { enabled?: unknown };
+    benchmark?: unknown;
   };
 
   if (typeof parsed.seedDate !== "string") {
@@ -24,10 +25,23 @@ export function parseConfig(json: string): Config {
   const marketDataEnabled =
     parsed.marketData?.enabled === true ? true : false;
 
+  let benchmark: string | null | undefined;
+  if (parsed.benchmark === null) {
+    benchmark = null;
+  } else if (
+    typeof parsed.benchmark === "string" &&
+    parsed.benchmark.length > 0
+  ) {
+    benchmark = parsed.benchmark;
+  } else {
+    benchmark = undefined;
+  }
+
   return {
     seedDate: parsed.seedDate,
     seedValue: parsed.seedValue,
     marketData: { enabled: marketDataEnabled },
+    benchmark,
   };
 }
 

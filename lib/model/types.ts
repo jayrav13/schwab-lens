@@ -5,6 +5,7 @@ export type Config = {
   seedDate: string;
   seedValue: number;
   marketData: { enabled: boolean };
+  benchmark?: string | null;
 };
 
 export type CashPoint = { date: string; balance: number };
@@ -39,6 +40,8 @@ export type PortfolioState = {
   externalFlows: FlowPoint[];
   navSeries: NavPoint[];
   portfolioValueSeries?: NavPoint[];
+  benchmarkSeries?: NavPoint[];
+  benchmarkTicker?: string;
   openOptionPositions: OpenOption[];
   openSharePositions: OpenShare[];
   premiumSeries: PremiumPoint[];
