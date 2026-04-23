@@ -191,7 +191,7 @@ export function computeYRange(
   - YTD handles the Jan-1 boundary
   - Empty input → empty output
   - Window entirely before series start → empty output
-  - Single-point series → empty output for any windowed preset (need ≥2 to draw)
+  - A single point in range is returned as-is; the `>= 2` drawability threshold is the caller's responsibility (enforced in `NavCard` when selecting drawable series).
 - `nearestPointByMs`:
   - Target before first point → first
   - Target after last point → last
