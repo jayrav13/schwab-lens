@@ -72,6 +72,24 @@ describe("loadDashboard", () => {
     );
   });
 
+  it("exposes closedTrades on PortfolioState when dashboard is ready", async () => {
+    const result = await loadDashboard();
+    if (result.kind !== "ready") return;
+
+    expect(Array.isArray(result.state.closedTrades)).toBe(true);
+
+    for (const t of result.state.closedTrades ?? []) {
+      expect(typeof t.contract.ticker).toBe("string");
+      expect(["Put", "Call"]).toContain(t.contract.type);
+      expect(typeof t.openDate).toBe("string");
+      expect(typeof t.closeDate).toBe("string");
+      expect(["Expired", "Assigned", "ClosedProfit", "ClosedLoss"]).toContain(
+        t.outcome,
+      );
+      expect(Number.isFinite(t.netPnL)).toBe(true);
+    }
+  });
+
   it("exposes portfolioValueSeries when market data is enabled and held tickers exist", async () => {
     const result = await loadDashboard();
     if (result.kind !== "ready") return;

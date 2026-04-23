@@ -4,6 +4,7 @@ import { NavCard } from "@/app/components/NavCard";
 import { PremiumsCard } from "@/app/components/PremiumsCard";
 import { OpenPositionsCard } from "@/app/components/OpenPositionsCard";
 import { TransactionLogCard } from "@/app/components/TransactionLogCard";
+import { TradeHistoryCard } from "@/app/components/TradeHistoryCard";
 import { OnboardingCard } from "@/app/components/OnboardingCard";
 import { AttentionBanner } from "@/app/components/AttentionBanner";
 import { ReturnMetricsCard } from "@/app/components/ReturnMetricsCard";
@@ -73,6 +74,10 @@ export default async function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <OpenPositionsCard state={state} asOfDate={asOfDate} />
         <TransactionLogCard transactions={state.transactions} />
+      </div>
+
+      <div className="mb-4">
+        <TradeHistoryCard state={state} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
