@@ -32,10 +32,6 @@ export function NavCard({ state }: Props) {
   const [containerW, setContainerW] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Suppress unused-variable lint noise until Task 6 wires these up.
-  void pinned;
-  void setPinned;
-
   const seriesDefs: SeriesDef[] = useMemo(() => {
     const out: SeriesDef[] = [];
     if (state.navSeries.length >= 2) {
@@ -96,7 +92,7 @@ export function NavCard({ state }: Props) {
   const lastMs = allMs.length ? Math.max(...allMs) : 1;
   const xRange = Math.max(1, lastMs - firstMs);
 
-  const activeXMs = hoverXMs;
+  const activeXMs = hoverXMs ?? (pinned ? pinned.xMs : null);
 
   const nearest =
     activeXMs !== null
@@ -143,6 +139,14 @@ export function NavCard({ state }: Props) {
     setHoverXMs(firstMs + frac * xRange);
   };
   const handleMouseLeave = () => setHoverXMs(null);
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!allMs.length) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, (t.clientX - rect.left) / rect.width));
+    setPinned({ xMs: firstMs + frac * xRange });
+  };
 
   const toggle = useCallback(
     (key: SeriesKey) => {
@@ -177,10 +181,16 @@ export function NavCard({ state }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  // Placeholder effect slot — Task 6 replaces with outside-tap-clears-pinned.
   useEffect(() => {
-    return;
-  }, []);
+    if (pinned === null) return;
+    const handler = (e: TouchEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) setPinned(null);
+    };
+    document.addEventListener("touchstart", handler);
+    return () => document.removeEventListener("touchstart", handler);
+  }, [pinned]);
 
   if (state.navSeries.length < 2) return <EmptyCard />;
 
@@ -222,6 +232,7 @@ export function NavCard({ state }: Props) {
         className="h-[180px] relative border-l border-b border-gray-200 dark:border-neutral-800"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
       >
         <svg
           className="absolute inset-0"
