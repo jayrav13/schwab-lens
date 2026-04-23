@@ -90,6 +90,27 @@ describe("loadDashboard", () => {
     }
   });
 
+  it("exposes benchmarkSeries when config.benchmark is a non-empty string and marketData is enabled", async () => {
+    const result = await loadDashboard();
+    if (result.kind !== "ready") return;
+    if (!result.state.config.marketData.enabled) return;
+
+    const bench = result.state.config.benchmark;
+    if (typeof bench === "string" && bench.length > 0) {
+      const warned = result.state.warnings.some(
+        (w) => w.kind === "MissingHistoricalPrices" && w.ticker === bench,
+      );
+      const hasSeries =
+        Array.isArray(result.state.benchmarkSeries) &&
+        (result.state.benchmarkSeries?.length ?? 0) >= 2 &&
+        result.state.benchmarkTicker === bench;
+      expect(hasSeries || warned).toBe(true);
+    } else {
+      expect(result.state.benchmarkSeries).toBeUndefined();
+      expect(result.state.benchmarkTicker).toBeUndefined();
+    }
+  });
+
   it("exposes portfolioValueSeries when market data is enabled and held tickers exist", async () => {
     const result = await loadDashboard();
     if (result.kind !== "ready") return;

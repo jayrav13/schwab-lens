@@ -103,6 +103,40 @@ export async function loadDashboard(): Promise<DashboardData> {
                 "No historical close data available for one or more dates.",
             });
           }
+
+          if (
+            typeof config.benchmark === "string" &&
+            config.benchmark.length > 0
+          ) {
+            const ticker = config.benchmark;
+            const res = await loadHistoricalCloses(ticker, seed.asOf, endDate);
+            if (res.kind === "ok" && res.closes.length >= 2) {
+              const baseline = res.closes[0].close;
+              if (baseline > 0 && Number.isFinite(baseline)) {
+                state.benchmarkSeries = res.closes.map(({ date, close }) => ({
+                  date,
+                  nav: state.config.seedValue * (close / baseline),
+                }));
+                state.benchmarkTicker = ticker;
+              } else {
+                state.warnings.push({
+                  kind: "MissingHistoricalPrices",
+                  ticker,
+                  reason: "Baseline close is zero or invalid.",
+                });
+              }
+            } else {
+              const reason =
+                res.kind === "error"
+                  ? res.message
+                  : "Insufficient historical data to render a benchmark line.";
+              state.warnings.push({
+                kind: "MissingHistoricalPrices",
+                ticker,
+                reason,
+              });
+            }
+          }
         }
       }
     }
