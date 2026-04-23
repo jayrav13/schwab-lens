@@ -11,10 +11,16 @@ export function NavCard({ state }: Props) {
       ? state.portfolioValueSeries
       : [];
 
+  const benchmarkPoints: NavPoint[] =
+    state.benchmarkSeries && state.benchmarkSeries.length >= 2
+      ? state.benchmarkSeries
+      : [];
+
   const allNavs = [
     state.config.seedValue,
     ...points.map((p) => p.nav),
     ...valuePoints.map((p) => p.nav),
+    ...benchmarkPoints.map((p) => p.nav),
   ];
   const minNav = Math.min(...allNavs);
   const maxNav = Math.max(...allNavs);
@@ -25,10 +31,12 @@ export function NavCard({ state }: Props) {
   const firstMs = Math.min(
     Date.parse(points[0].date),
     ...(valuePoints.length ? [Date.parse(valuePoints[0].date)] : []),
+    ...(benchmarkPoints.length ? [Date.parse(benchmarkPoints[0].date)] : []),
   );
   const lastMs = Math.max(
     Date.parse(points.at(-1)!.date),
     ...(valuePoints.length ? [Date.parse(valuePoints.at(-1)!.date)] : []),
+    ...(benchmarkPoints.length ? [Date.parse(benchmarkPoints.at(-1)!.date)] : []),
   );
   const xRange = Math.max(1, lastMs - firstMs);
   const scaleX = (ms: number) => ((ms - firstMs) / xRange) * 600;
@@ -47,6 +55,7 @@ export function NavCard({ state }: Props) {
   const path = pathOf(points);
   const area = `${path} L600,180 L0,180 Z`;
   const valuePath = valuePoints.length ? pathOf(valuePoints) : null;
+  const benchmarkPath = benchmarkPoints.length ? pathOf(benchmarkPoints) : null;
 
   const seedY = scaleY(state.config.seedValue);
 
@@ -65,6 +74,9 @@ export function NavCard({ state }: Props) {
         Options Income: cash + shares at cost basis, at each trade date.
         {valuePath
           ? " Portfolio Value: cash + shares at daily market close, through T-1."
+          : ""}
+        {benchmarkPath && state.benchmarkTicker
+          ? ` ${state.benchmarkTicker} (normalized): starts at seed value, grows by index return.`
           : ""}
       </p>
       <div className="h-[180px] relative border-l border-b border-gray-200 dark:border-neutral-800">
@@ -88,6 +100,15 @@ export function NavCard({ state }: Props) {
               d={valuePath}
               stroke="#8b5cf6"
               strokeWidth="2"
+              fill="none"
+            />
+          )}
+          {benchmarkPath && (
+            <path
+              d={benchmarkPath}
+              stroke="#6b7280"
+              strokeWidth="2"
+              strokeDasharray="5 3"
               fill="none"
             />
           )}
@@ -115,6 +136,12 @@ export function NavCard({ state }: Props) {
           <span>
             <span className="inline-block w-2.5 h-2.5 align-middle rounded-sm bg-violet-500 mr-1" />
             Portfolio Value
+          </span>
+        )}
+        {benchmarkPath && state.benchmarkTicker && (
+          <span>
+            <span className="inline-block w-2.5 h-2.5 align-middle rounded-sm bg-gray-500 mr-1" />
+            {state.benchmarkTicker} (normalized)
           </span>
         )}
         <span>
