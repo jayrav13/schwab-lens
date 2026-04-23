@@ -28,7 +28,8 @@ export type Warning =
   | { kind: "UnknownAction"; rawAction: string; count: number }
   | { kind: "CashDrift"; expected: number; actual: number }
   | { kind: "NegativeShareEndOfDay"; ticker: string; date: string; shares: number }
-  | { kind: "UnpairedAssignment"; date: string; contractKey: string };
+  | { kind: "UnpairedAssignment"; date: string; contractKey: string }
+  | { kind: "MissingHistoricalPrices"; ticker: string; reason: string };
 
 export type PortfolioState = {
   config: Config;
@@ -36,6 +37,7 @@ export type PortfolioState = {
   cashLedger: CashPoint[];
   externalFlows: FlowPoint[];
   navSeries: NavPoint[];
+  portfolioValueSeries?: NavPoint[];
   openOptionPositions: OpenOption[];
   openSharePositions: OpenShare[];
   premiumSeries: PremiumPoint[];

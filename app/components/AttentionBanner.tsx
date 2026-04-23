@@ -10,6 +10,8 @@ function describe(w: Warning): string {
       return `${w.ticker} share position is negative (${w.shares}) after ${w.date}.`;
     case "UnpairedAssignment":
       return `Assignment on ${w.date} (${w.contractKey}) has no matching Buy/Sell share row.`;
+    case "MissingHistoricalPrices":
+      return `Historical closes unavailable for ${w.ticker} — Portfolio Value excludes this ticker's contribution on missing dates. (${w.reason})`;
   }
 }
 
