@@ -29,14 +29,12 @@ export function NavCard({ state }: Props) {
   const [hidden, setHidden] = useState<Set<SeriesKey>>(() => new Set());
   const [pinned, setPinned] = useState<{ xMs: number } | null>(null);
   const [hoverXMs, setHoverXMs] = useState<number | null>(null);
+  const [containerW, setContainerW] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Suppress unused-variable lint noise until Task 5/6 wire these up.
+  // Suppress unused-variable lint noise until Task 6 wires these up.
   void pinned;
   void setPinned;
-  void hoverXMs;
-  void setHoverXMs;
-  void nearestPointByMs;
 
   const seriesDefs: SeriesDef[] = useMemo(() => {
     const out: SeriesDef[] = [];
@@ -98,6 +96,21 @@ export function NavCard({ state }: Props) {
   const lastMs = allMs.length ? Math.max(...allMs) : 1;
   const xRange = Math.max(1, lastMs - firstMs);
 
+  const activeXMs = hoverXMs;
+
+  const nearest =
+    activeXMs !== null
+      ? drawable
+          .map((s) => ({ def: s.def, point: nearestPointByMs(s.points, activeXMs) }))
+          .filter(
+            (n): n is { def: (typeof drawable)[number]["def"]; point: NavPoint } =>
+              n.point !== null,
+          )
+      : [];
+
+  const activeDate =
+    activeXMs !== null ? new Date(activeXMs).toISOString().slice(0, 10) : null;
+
   const scaleX = (ms: number) => ((ms - firstMs) / xRange) * CHART_W;
   const scaleY = (v: number) => CHART_H - ((v - yMin) / (yMax - yMin || 1)) * CHART_H;
 
@@ -123,6 +136,14 @@ export function NavCard({ state }: Props) {
         })
       : [];
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!allMs.length) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    setHoverXMs(firstMs + frac * xRange);
+  };
+  const handleMouseLeave = () => setHoverXMs(null);
+
   const toggle = useCallback(
     (key: SeriesKey) => {
       setHidden((prev) => {
@@ -142,6 +163,19 @@ export function NavCard({ state }: Props) {
     },
     [seriesDefs],
   );
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setContainerW(el.clientWidth);
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerW(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Placeholder effect slot — Task 6 replaces with outside-tap-clears-pinned.
   useEffect(() => {
@@ -186,6 +220,8 @@ export function NavCard({ state }: Props) {
       <div
         ref={containerRef}
         className="h-[180px] relative border-l border-b border-gray-200 dark:border-neutral-800"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
         <svg
           className="absolute inset-0"
@@ -224,7 +260,39 @@ export function NavCard({ state }: Props) {
             stroke="#9ca3af"
             strokeDasharray="3,3"
           />
+          {activeXMs !== null && nearest.length > 0 && (
+            <>
+              <line
+                x1={scaleX(activeXMs)}
+                y1={0}
+                x2={scaleX(activeXMs)}
+                y2={CHART_H}
+                stroke="#9ca3af"
+                strokeWidth={1}
+              />
+              {nearest.map((n) => (
+                <circle
+                  key={n.def.key}
+                  cx={scaleX(Date.parse(n.point.date))}
+                  cy={scaleY(n.point.nav)}
+                  r={3.5}
+                  fill={n.def.color}
+                  stroke="#fff"
+                  strokeWidth={1}
+                />
+              ))}
+            </>
+          )}
         </svg>
+        {activeXMs !== null && activeDate !== null && nearest.length > 0 && (
+          <ChartTooltip
+            date={activeDate}
+            nearest={nearest}
+            seedValue={state.config.seedValue}
+            containerW={containerW}
+            xPxFrac={xRange > 0 ? (activeXMs - firstMs) / xRange : 0}
+          />
+        )}
       </div>
 
       <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1 pl-1">
@@ -256,6 +324,48 @@ export function NavCard({ state }: Props) {
           Seed (${state.config.seedValue.toLocaleString()})
         </span>
       </div>
+    </div>
+  );
+}
+
+function ChartTooltip(props: {
+  date: string;
+  nearest: { def: { color: string; label: string; key: string }; point: NavPoint }[];
+  seedValue: number;
+  containerW: number;
+  xPxFrac: number;
+}) {
+  const { date, nearest, seedValue, containerW, xPxFrac } = props;
+  const TOOLTIP_W = 180;
+  const xPx = xPxFrac * containerW;
+  const flip = xPx > containerW - TOOLTIP_W - 8;
+  const left = flip ? xPx - TOOLTIP_W - 8 : xPx + 8;
+  const clampedLeft = Math.max(0, Math.min(containerW - TOOLTIP_W, left));
+  return (
+    <div
+      className="absolute top-1 z-10 bg-white/95 dark:bg-neutral-900/95 border border-gray-200 dark:border-neutral-700 rounded px-2 py-1 text-[11px] text-gray-700 dark:text-gray-200 pointer-events-none shadow"
+      style={{ left: `${clampedLeft}px`, width: `${TOOLTIP_W}px` }}
+    >
+      <div className="font-semibold mb-0.5 tabular-nums">{date}</div>
+      {nearest.map(({ def, point }) => {
+        const pct = ((point.nav - seedValue) / seedValue) * 100;
+        return (
+          <div key={def.key} className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-2 h-2 rounded-sm shrink-0"
+              style={{ backgroundColor: def.color }}
+            />
+            <span className="flex-1 truncate">{def.label}</span>
+            <span className="tabular-nums">
+              ${point.nav.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </span>
+            <span className="tabular-nums text-gray-500 dark:text-gray-400">
+              ({pct >= 0 ? "+" : ""}
+              {pct.toFixed(1)}%)
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
