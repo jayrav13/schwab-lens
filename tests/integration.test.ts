@@ -71,4 +71,27 @@ describe("loadDashboard", () => {
       result.kind,
     );
   });
+
+  it("exposes portfolioValueSeries when market data is enabled and held tickers exist", async () => {
+    const result = await loadDashboard();
+    if (result.kind !== "ready") return;
+
+    if (!result.state.config.marketData.enabled) {
+      expect(result.state.portfolioValueSeries).toBeUndefined();
+      return;
+    }
+
+    const anyHeldTicker =
+      result.state.openSharePositions.length > 0 ||
+      result.state.transactions.some(
+        (t) => (t.action === "Buy" || t.action === "Sell") && t.ticker,
+      );
+
+    if (anyHeldTicker) {
+      const hasSeries =
+        Array.isArray(result.state.portfolioValueSeries) &&
+        result.state.portfolioValueSeries.length >= 0;
+      expect(hasSeries).toBe(true);
+    }
+  });
 });

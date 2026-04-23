@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTradeDate } from "@/lib/util/dates";
+import { parseTradeDate, yesterdayInET } from "@/lib/util/dates";
 
 describe("parseTradeDate", () => {
   it("parses a simple MM/DD/YYYY date", () => {
@@ -20,5 +20,17 @@ describe("parseTradeDate", () => {
 
   it("throws on empty input", () => {
     expect(() => parseTradeDate("")).toThrow();
+  });
+});
+
+describe("yesterdayInET", () => {
+  it("returns the previous ET calendar day as YYYY-MM-DD", () => {
+    const noonET = new Date("2026-04-23T16:00:00Z");
+    expect(yesterdayInET(noonET)).toBe("2026-04-22");
+  });
+
+  it("handles the ET/UTC boundary correctly", () => {
+    const earlyUTC = new Date("2026-04-23T03:00:00Z");
+    expect(yesterdayInET(earlyUTC)).toBe("2026-04-21");
   });
 });

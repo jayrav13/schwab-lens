@@ -12,3 +12,16 @@ export function parseTradeDate(raw: string): string {
   const [, mm, dd, yyyy] = m;
   return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
+
+export function yesterdayInET(now: Date = new Date()): string {
+  const dayMs = 24 * 60 * 60 * 1000;
+  const y = new Date(now.getTime() - dayMs);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(y);
+  const get = (t: string) => parts.find((p) => p.type === t)!.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}

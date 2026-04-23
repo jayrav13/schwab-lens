@@ -132,7 +132,9 @@ async function getYahoo(): Promise<YahooLike> {
   const YahooFinance = yf.default as unknown as new (opts?: {
     suppressNotices?: string[];
   }) => YahooLike;
-  yahooInstance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
+  yahooInstance = new YahooFinance({
+    suppressNotices: ["yahooSurvey", "ripHistorical"],
+  });
   return yahooInstance;
 }
 
