@@ -33,3 +33,29 @@ export function filterSeriesByRange(
   if (startMs === null) return series;
   return series.filter((p) => Date.parse(p.date) >= startMs);
 }
+
+export function nearestPointByMs(
+  series: NavPoint[],
+  targetMs: number,
+): NavPoint | null {
+  if (series.length === 0) return null;
+  let lo = 0;
+  let hi = series.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (Date.parse(series[mid].date) < targetMs) lo = mid + 1;
+    else hi = mid;
+  }
+  const cand = [series[lo]];
+  if (lo > 0) cand.unshift(series[lo - 1]);
+  let best = cand[0];
+  let bestDelta = Math.abs(Date.parse(best.date) - targetMs);
+  for (let i = 1; i < cand.length; i++) {
+    const delta = Math.abs(Date.parse(cand[i].date) - targetMs);
+    if (delta < bestDelta) {
+      best = cand[i];
+      bestDelta = delta;
+    }
+  }
+  return best;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { filterSeriesByRange } from "@/lib/model/chart";
+import { filterSeriesByRange, nearestPointByMs } from "@/lib/model/chart";
 import type { NavPoint } from "@/lib/model/types";
 
 const daily: NavPoint[] = [
@@ -76,5 +76,40 @@ describe("filterSeriesByRange", () => {
       "2026-04-20",
     );
     expect(out).toEqual([{ date: "2026-04-10", nav: 120 }]);
+  });
+});
+
+describe("nearestPointByMs", () => {
+  const s: NavPoint[] = [
+    { date: "2026-01-15", nav: 100 },
+    { date: "2026-02-01", nav: 110 },
+    { date: "2026-03-01", nav: 120 },
+  ];
+
+  it("returns null for an empty series", () => {
+    expect(nearestPointByMs([], Date.parse("2026-02-15"))).toBeNull();
+  });
+
+  it("returns the first point when target is before the series", () => {
+    const out = nearestPointByMs(s, Date.parse("2025-06-01"));
+    expect(out?.date).toBe("2026-01-15");
+  });
+
+  it("returns the last point when target is after the series", () => {
+    const out = nearestPointByMs(s, Date.parse("2027-01-01"));
+    expect(out?.date).toBe("2026-03-01");
+  });
+
+  it("picks the closer of two adjacent points", () => {
+    const out = nearestPointByMs(s, Date.parse("2026-02-05"));
+    expect(out?.date).toBe("2026-02-01");
+  });
+
+  it("tiebreak: equidistant target picks the earlier point", () => {
+    const jan = Date.parse("2026-01-15");
+    const feb = Date.parse("2026-02-01");
+    const mid = jan + (feb - jan) / 2;
+    const out = nearestPointByMs(s, mid);
+    expect(out?.date).toBe("2026-01-15");
   });
 });
