@@ -59,3 +59,18 @@ export function nearestPointByMs(
   }
   return best;
 }
+
+export function computeYRange(
+  visibleSeries: NavPoint[][],
+  seedValue: number,
+): { yMin: number; yMax: number } {
+  const navs = visibleSeries.flatMap((s) => s.map((p) => p.nav));
+  if (navs.length === 0) {
+    return { yMin: seedValue * 0.9, yMax: seedValue * 1.1 };
+  }
+  const withSeed = [...navs, seedValue];
+  const rawMin = Math.min(...withSeed);
+  const rawMax = Math.max(...withSeed);
+  const pad = (rawMax - rawMin) * 0.1 || 1;
+  return { yMin: rawMin - pad, yMax: rawMax + pad };
+}

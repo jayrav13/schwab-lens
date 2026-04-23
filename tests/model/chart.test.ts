@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { filterSeriesByRange, nearestPointByMs } from "@/lib/model/chart";
+import {
+  filterSeriesByRange,
+  nearestPointByMs,
+  computeYRange,
+} from "@/lib/model/chart";
 import type { NavPoint } from "@/lib/model/types";
 
 const daily: NavPoint[] = [
@@ -111,5 +115,53 @@ describe("nearestPointByMs", () => {
     const mid = jan + (feb - jan) / 2;
     const out = nearestPointByMs(s, mid);
     expect(out?.date).toBe("2026-01-15");
+  });
+});
+
+describe("computeYRange", () => {
+  it("computes min/max across multi-series with a 10% pad", () => {
+    const a: NavPoint[] = [
+      { date: "2026-01-15", nav: 100 },
+      { date: "2026-02-01", nav: 200 },
+    ];
+    const b: NavPoint[] = [
+      { date: "2026-01-15", nav: 150 },
+      { date: "2026-02-01", nav: 180 },
+    ];
+    const { yMin, yMax } = computeYRange([a, b], 100);
+    // raw min = 100, raw max = 200, pad = (200 - 100) * 0.1 = 10
+    expect(yMin).toBe(90);
+    expect(yMax).toBe(210);
+  });
+
+  it("always includes seedValue in the range", () => {
+    const a: NavPoint[] = [
+      { date: "2026-01-15", nav: 500 },
+      { date: "2026-02-01", nav: 600 },
+    ];
+    const { yMin, yMax } = computeYRange([a], 100);
+    expect(yMin).toBeLessThanOrEqual(100);
+    expect(yMax).toBeGreaterThanOrEqual(600);
+  });
+
+  it("single-series: min/max from that series + seed", () => {
+    const a: NavPoint[] = [
+      { date: "2026-01-15", nav: 120 },
+      { date: "2026-02-01", nav: 150 },
+    ];
+    const { yMin, yMax } = computeYRange([a], 100);
+    // Raw min = 100 (seed), raw max = 150, pad = (150 - 100) * 0.1 = 5
+    expect(yMin).toBe(95);
+    expect(yMax).toBe(155);
+  });
+
+  it("all-empty fallback: [seed * 0.9, seed * 1.1]", () => {
+    const { yMin, yMax } = computeYRange([], 10000);
+    expect(yMin).toBe(9000);
+    expect(yMax).toBe(11000);
+
+    const { yMin: yMin2, yMax: yMax2 } = computeYRange([[], []], 10000);
+    expect(yMin2).toBe(9000);
+    expect(yMax2).toBe(11000);
   });
 });
