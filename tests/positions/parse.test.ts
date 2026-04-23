@@ -68,4 +68,15 @@ describe("parsePositionsCsv", () => {
       ),
     ).toThrow(/Cash & Cash Investments/);
   });
+
+  it('accepts "Account Total" as the totals row label (cash-only snapshots)', () => {
+    const cashOnly = parsePositionsCsv(
+      fixture("positions-cash-only.csv"),
+      "positions-cash-only.csv",
+    );
+    expect(cashOnly.cash).toBe(7500);
+    expect(cashOnly.totalValue).toBe(7500);
+    expect(cashOnly.shares).toEqual([]);
+    expect(cashOnly.options).toEqual([]);
+  });
 });

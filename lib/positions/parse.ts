@@ -102,7 +102,7 @@ export function parsePositionsCsv(
       cash = parseNumericCell(mktVal);
       continue;
     }
-    if (symbol === "Positions Total") {
+    if (symbol === "Positions Total" || symbol === "Account Total") {
       totalValue = parseNumericCell(mktVal);
       continue;
     }
@@ -146,7 +146,9 @@ export function parsePositionsCsv(
     );
   }
   if (totalValue === null) {
-    throw new Error('parsePositionsCsv: missing "Positions Total" row');
+    throw new Error(
+      'parsePositionsCsv: missing "Positions Total" or "Account Total" row',
+    );
   }
 
   return { asOf, cash, totalValue, shares, options, sourceFile };
