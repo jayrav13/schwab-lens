@@ -134,3 +134,27 @@ describe("loadDashboard", () => {
     }
   });
 });
+
+describe("loadDashboard({ includeMarketData: false })", () => {
+  it("skips historical + benchmark + mark-to-market entirely", async () => {
+    const result = await loadDashboard({ includeMarketData: false });
+    if (result.kind !== "ready") return;
+
+    expect(result.state.portfolioValueSeries).toBeUndefined();
+    expect(result.state.benchmarkSeries).toBeUndefined();
+    expect(result.state.benchmarkTicker).toBeUndefined();
+    expect(result.markToMarket).toBeNull();
+
+    const missing = result.state.warnings.filter(
+      (w) => w.kind === "MissingHistoricalPrices",
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it("still returns closedTrades and transactions", async () => {
+    const result = await loadDashboard({ includeMarketData: false });
+    if (result.kind !== "ready") return;
+    expect(Array.isArray(result.state.closedTrades)).toBe(true);
+    expect(Array.isArray(result.state.transactions)).toBe(true);
+  });
+});

@@ -29,7 +29,14 @@ export type DashboardData =
   | { kind: "no-config"; dataDir: string }
   | { kind: "parse-error"; message: string };
 
-export async function loadDashboard(): Promise<DashboardData> {
+export type LoadDashboardOptions = {
+  includeMarketData?: boolean;
+};
+
+export async function loadDashboard(
+  options: LoadDashboardOptions = {},
+): Promise<DashboardData> {
+  const includeMarketData = options.includeMarketData ?? true;
   const dataDir = path.join(process.cwd(), "data");
   const config = readConfigFile(dataDir);
   if (!config) return { kind: "no-config", dataDir };
@@ -55,7 +62,7 @@ export async function loadDashboard(): Promise<DashboardData> {
 
     const state = buildPortfolio(transactions, config, seed);
 
-    if (config.marketData.enabled) {
+    if (includeMarketData && config.marketData.enabled) {
       const heldTickers = collectHeldTickers(state, seed);
       if (heldTickers.length > 0) {
         const endDate = yesterdayInET();
@@ -143,6 +150,7 @@ export async function loadDashboard(): Promise<DashboardData> {
 
     let markToMarket: MarkToMarket | null = null;
     if (
+      includeMarketData &&
       config.marketData.enabled &&
       (state.openSharePositions.length > 0 || latestSnap !== null)
     ) {
@@ -177,7 +185,7 @@ export async function loadDashboard(): Promise<DashboardData> {
       },
       loadedAt: new Date().toISOString(),
       markToMarket,
-      latestSnapshot: latestSnap,
+      latestSnapshot: includeMarketData ? latestSnap : null,
     };
   } catch (err) {
     return {
