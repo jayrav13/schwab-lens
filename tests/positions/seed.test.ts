@@ -55,7 +55,13 @@ describe("buildSeedFromSnapshot", () => {
     });
     expect(opt.quantityOpen).toBe(1);
     expect(opt.netPremiumCollected).toBe(0);
-    expect(opt.entries).toEqual([]);
+  });
+
+  it("synthesizes a single opening entry dated the snapshot's asOf so the UI invariant (non-empty entries) holds", () => {
+    const seed = buildSeedFromSnapshot(snap);
+    expect(seed.initialOptions[0].entries).toEqual([
+      { date: "2026-03-10", price: 1.2, qty: 1 },
+    ]);
   });
 
   it("skips long options (not the wheel strategy's concern)", () => {

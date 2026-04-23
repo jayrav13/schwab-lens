@@ -14,17 +14,20 @@ export function buildSeedFromSnapshot(snap: PositionsSnapshot): Seed {
 
   const initialOptions: OpenOption[] = snap.options
     .filter((o) => o.quantity < 0)
-    .map((o) => ({
-      contract: {
-        ticker: o.underlying,
-        expiry: o.expiry,
-        strike: o.strike,
-        type: o.callPut === "C" ? "Call" : "Put",
-      },
-      quantityOpen: Math.abs(o.quantity),
-      netPremiumCollected: 0,
-      entries: [],
-    }));
+    .map((o) => {
+      const qty = Math.abs(o.quantity);
+      return {
+        contract: {
+          ticker: o.underlying,
+          expiry: o.expiry,
+          strike: o.strike,
+          type: o.callPut === "C" ? "Call" : "Put",
+        },
+        quantityOpen: qty,
+        netPremiumCollected: 0,
+        entries: [{ date, price: o.price, qty }],
+      };
+    });
 
   return {
     asOf: date,
