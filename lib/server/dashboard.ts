@@ -2,8 +2,8 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { loadTransactionsFromDir } from "@/lib/csv/load";
 import { loadPositionsFromDir, latest, earliest } from "@/lib/positions/load";
-import { buildSeedFromSnapshot } from "@/lib/positions/seed";
-import { buildPortfolio, seedFromConfig } from "@/lib/model/portfolio";
+import { chooseSeed } from "@/lib/positions/seed";
+import { buildPortfolio } from "@/lib/model/portfolio";
 import { readConfigFile } from "@/lib/config";
 import { fetchQuotes, type Quote } from "@/lib/market/quotes";
 import {
@@ -44,9 +44,11 @@ export async function loadDashboard(): Promise<DashboardData> {
 
     const earliestSnap = earliest(snapshots);
     const latestSnap = latest(snapshots);
-    const seed = earliestSnap
-      ? buildSeedFromSnapshot(earliestSnap)
-      : seedFromConfig(config);
+    const seed = chooseSeed({
+      transactions,
+      earliestSnapshot: earliestSnap,
+      config,
+    });
 
     const state = buildPortfolio(transactions, config, seed);
 
