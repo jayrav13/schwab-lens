@@ -1,4 +1,5 @@
 import type { OptionLeg, Transaction } from "@/lib/csv/types";
+import type { ClosedTrade } from "@/lib/model/metrics/trades";
 
 export type Config = {
   seedDate: string;
@@ -42,7 +43,9 @@ export type PortfolioState = {
   openSharePositions: OpenShare[];
   premiumSeries: PremiumPoint[];
   premiumTotals: { gross: number; closed: number; net: number };
+  closedTrades?: ClosedTrade[];
   warnings: Warning[];
 };
 
 export type { Seed } from "@/lib/positions/types";
+export type { ClosedTrade, TradeOutcome } from "@/lib/model/metrics/trades";

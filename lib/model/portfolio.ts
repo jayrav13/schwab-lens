@@ -15,6 +15,7 @@ import {
   computePremiumSeries,
   computePremiumTotals,
 } from "@/lib/model/metrics/premiums";
+import { computeClosedTrades } from "@/lib/model/metrics/trades";
 
 const CASH_DRIFT_TOLERANCE = 0.01;
 
@@ -55,6 +56,7 @@ export function buildPortfolio(
 
   const premiumSeries = computePremiumSeries(txs);
   const premiumTotals = computePremiumTotals(txs);
+  const closedTrades = computeClosedTrades(txs);
 
   const unknownCounts = new Map<string, number>();
   for (const t of txs) {
@@ -94,6 +96,7 @@ export function buildPortfolio(
     openSharePositions: openShares,
     premiumSeries,
     premiumTotals,
+    closedTrades,
     warnings,
   };
 }
