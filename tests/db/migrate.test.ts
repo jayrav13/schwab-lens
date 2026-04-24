@@ -83,3 +83,30 @@ describe("runMigrations", () => {
     expect(bExists).toBeDefined();
   });
 });
+
+describe("runMigrations against db/migrations/", () => {
+  it("creates all expected tables and seeds brokerages", () => {
+    const db = openDb(":memory:");
+    runMigrations(db, path.join(process.cwd(), "db", "migrations"));
+
+    const tables = (db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+      .all() as Array<{ name: string }>).map((r) => r.name);
+
+    for (const t of [
+      "accounts",
+      "brokerages",
+      "migrations",
+      "position_snapshots",
+      "settings",
+      "transactions",
+    ]) {
+      expect(tables).toContain(t);
+    }
+
+    const brokerages = (db
+      .prepare("SELECT slug FROM brokerages ORDER BY slug")
+      .all() as Array<{ slug: string }>).map((r) => r.slug);
+    expect(brokerages).toEqual(["chase", "fidelity", "robinhood", "schwab"]);
+  });
+});
