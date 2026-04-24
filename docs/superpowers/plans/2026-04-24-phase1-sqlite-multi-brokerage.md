@@ -39,6 +39,8 @@ lib/brokerage/schwab/transactions.ts
 lib/brokerage/schwab/positions.ts
 lib/brokerage/schwab/actions.ts
 
+lib/util/optionSymbol.ts
+
 lib/ingest/contentHash.ts
 lib/ingest/run.ts
 
@@ -3251,11 +3253,123 @@ EOF
 This is the largest task. It must land as one cohesive change because the function signatures, call sites, and integration test all need to align for tests to pass.
 
 **Files:**
+- Create: `lib/util/optionSymbol.ts`
+- Test: `tests/util/optionSymbol.test.ts`
+- Modify: `lib/brokerage/schwab/positions.ts` (use the util instead of inline regex)
 - Modify: `lib/positions/seed.ts`
 - Create: `lib/server/dashboardSource.ts`
 - Modify: `lib/server/dashboard.ts`
 - Modify: `tests/positions/seed.test.ts`
 - Modify: `tests/integration.test.ts`
+
+- [ ] **Step 0a: Create option-symbol parser util**
+
+Multiple modules need to parse Schwab-style option symbols (e.g., `"FAKE 01/09/2026 10.00 P"`): the snapshot parser, the dashboardSource transaction adapter (so option transactions get a populated `option` leg — many downstream metrics depend on it). Extract to a shared utility.
+
+Create `tests/util/optionSymbol.test.ts`:
+
+```ts
+import { describe, it, expect } from "vitest";
+import { parseOptionSymbol } from "@/lib/util/optionSymbol";
+
+describe("parseOptionSymbol", () => {
+  it("parses a put", () => {
+    expect(parseOptionSymbol("FAKE 01/09/2026 10.00 P")).toEqual({
+      underlying: "FAKE",
+      expiry: "2026-01-09",
+      strike: 10,
+      callPut: "P",
+    });
+  });
+
+  it("parses a call with multi-letter ticker and decimal in ticker", () => {
+    expect(parseOptionSymbol("ABC.D 12/20/2026 100 C")).toEqual({
+      underlying: "ABC.D",
+      expiry: "2026-12-20",
+      strike: 100,
+      callPut: "C",
+    });
+  });
+
+  it("returns null for non-option symbols", () => {
+    expect(parseOptionSymbol("FAKE")).toBeNull();
+    expect(parseOptionSymbol("not a symbol")).toBeNull();
+    expect(parseOptionSymbol("")).toBeNull();
+  });
+});
+```
+
+Run the test (it will fail — module not found):
+
+```bash
+npx vitest run tests/util/optionSymbol.test.ts
+```
+
+Create `lib/util/optionSymbol.ts`:
+
+```ts
+export type OptionSymbol = {
+  underlying: string;
+  expiry: string;       // YYYY-MM-DD
+  strike: number;
+  callPut: "C" | "P";
+};
+
+const OPTION_SYMBOL_RE =
+  /^([A-Z.]+)\s+(\d{1,2})\/(\d{1,2})\/(\d{4})\s+([0-9]+(?:\.[0-9]+)?)\s+([PC])$/;
+
+export function parseOptionSymbol(symbol: string): OptionSymbol | null {
+  const m = symbol.match(OPTION_SYMBOL_RE);
+  if (!m) return null;
+  const [, underlying, mm, dd, yyyy, strike, pc] = m;
+  return {
+    underlying,
+    expiry: `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`,
+    strike: Number(strike),
+    callPut: pc as "C" | "P",
+  };
+}
+```
+
+Run the test:
+
+```bash
+npx vitest run tests/util/optionSymbol.test.ts
+```
+
+Expected: 3 passed.
+
+- [ ] **Step 0b: Refactor `lib/brokerage/schwab/positions.ts` to use the util**
+
+Replace the inline `OPTION_SYMBOL` regex / parsing code in `lib/brokerage/schwab/positions.ts` with an import from `@/lib/util/optionSymbol`. (Note: positions.ts currently uses the regex only inline-checked via the option's `Asset Type === "Option"` branch — when classifying option rows, the symbol is just stored verbatim, not split. Search for any inline option-symbol parsing in this file. If there isn't any in the current implementation from Task 9 (because we kept option symbols intact in `CanonicalPositionSnapshot.symbol`), this step is a no-op for positions.ts and you skip directly to Step 0c.)
+
+Run the schwab positions test to confirm nothing broke:
+
+```bash
+npx vitest run tests/brokerage/schwab/positions.test.ts
+```
+
+Expected: 6 passed.
+
+- [ ] **Step 0c: Commit the util**
+
+```bash
+git add lib/util/optionSymbol.ts tests/util/optionSymbol.test.ts
+git status
+git commit -m "$(cat <<'EOF'
+Add option-symbol parser util
+
+Shared parsing of Schwab-style option symbols ('FAKE 01/09/2026 10.00 P')
+into { underlying, expiry, strike, callPut }. Used by the brokerage
+adapter's snapshot parsing and by dashboardSource's transaction adapter
+to repopulate option-leg fields that legacy model code depends on.
+
+Refs #15.
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+```
 
 - [ ] **Step 1: Familiarize with the current code**
 
@@ -3389,6 +3503,7 @@ import {
   type SnapshotForDate,
 } from "@/lib/db/repos/positionSnapshots";
 import { getSetting, getBoolSetting } from "@/lib/db/repos/settings";
+import { parseOptionSymbol } from "@/lib/util/optionSymbol";
 import type { Transaction } from "@/lib/csv/types";
 import type { PositionsSnapshot } from "@/lib/positions/types";
 import type { CanonicalAction } from "@/lib/brokerage/types";
@@ -3458,12 +3573,21 @@ const ACTION_MAP: Record<CanonicalAction, Transaction["action"]> = {
 
 function toLegacyTx(stored: StoredTransaction): Transaction {
   const raw = stored.raw as Record<string, string>;
+  const symbol = stored.symbol ?? undefined;
+  const optionLeg = symbol ? parseOptionSymbol(symbol) : null;
   return {
     tradeDate: stored.tradeDate,
     action: ACTION_MAP[stored.actionCanonical],
     rawAction: stored.actionRaw,
-    ticker: stored.symbol ?? undefined,
-    option: undefined,
+    ticker: optionLeg ? optionLeg.underlying : symbol,
+    option: optionLeg
+      ? {
+          ticker: optionLeg.underlying,
+          expiry: optionLeg.expiry,
+          strike: optionLeg.strike,
+          type: optionLeg.callPut === "C" ? "Call" : "Put",
+        }
+      : undefined,
     quantity: stored.quantity ?? 0,
     price: stored.price ?? undefined,
     fees: stored.fees ?? 0,
@@ -3480,9 +3604,6 @@ function toLegacyTx(stored: StoredTransaction): Transaction {
     },
   };
 }
-
-const OPTION_SYMBOL =
-  /^([A-Z.]+)\s+(\d{1,2})\/(\d{1,2})\/(\d{4})\s+([0-9]+(?:\.[0-9]+)?)\s+([PC])$/;
 
 function snapshotForDateToLegacy(
   snap: SnapshotForDate | null,
@@ -3509,14 +3630,13 @@ function snapshotForDateToLegacy(
         costBasis: qty === 0 ? 0 : totalCost / qty,
       });
     } else if (r.assetType === "option") {
-      const m = r.symbol.match(OPTION_SYMBOL);
-      if (!m) continue;
-      const [, underlying, mm, dd, yyyy, strike, pc] = m;
+      const leg = parseOptionSymbol(r.symbol);
+      if (!leg) continue;
       options.push({
-        underlying,
-        expiry: `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`,
-        strike: Number(strike),
-        callPut: pc as "C" | "P",
+        underlying: leg.underlying,
+        expiry: leg.expiry,
+        strike: leg.strike,
+        callPut: leg.callPut,
         quantity: r.quantity ?? 0,
         price: r.price ?? 0,
         marketValue: r.marketValue ?? 0,
