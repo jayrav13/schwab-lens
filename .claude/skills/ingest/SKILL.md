@@ -1,28 +1,49 @@
 ---
 name: ingest
-description: Move brokerage CSV exports (Schwab, plus Robinhood/Chase/Fidelity adapters as they land) from ~/Downloads into the repo's data/<brokerage>/<account>/ folders, then upsert into data/portfolio.db. Use when the user says "ingest my data", invokes /ingest, or has just downloaded brokerage exports.
+description: Move Schwab Demo Transactions and Positions CSVs from ~/Downloads into this repo's data/ subdirectories. Use when the user says "ingest my schwab-lens", "move schwab-lens downloads", invokes /ingest, or has just downloaded Schwab exports they want in the repo.
 ---
 
-# Ingest brokerage CSVs
+# Demo — ingest downloaded CSVs
 
-Moves any brokerage CSVs sitting in `~/Downloads` into the correct `data/<brokerage>/<account>/<kind>/` folder and runs the DB upsert. Idempotent.
+Move any Schwab Demo CSVs sitting in `~/Downloads` into the correct subdirectory of this repo. Safe to re-run: uses `mv -n` (no-clobber) so nothing is overwritten.
 
 Assume the repo root is the current working directory.
 
 Execute these steps in order.
 
-1. Route files from `~/Downloads` into `data/`:
+1. Ensure the destination dirs exist:
 
    ```bash
-   npx tsx scripts/route-downloads.ts
+   mkdir -p data/transactions data/positions
    ```
 
-2. Run the DB upsert:
+2. Move Transactions CSVs:
 
    ```bash
-   npm run ingest
+   for f in ~/Downloads/Demo*Transactions*.csv; do
+     [ -e "$f" ] || continue
+     mv -n "$f" data/transactions/
+   done
    ```
 
-3. Report the routing summary and the ingest summary verbatim, plus a one-line interpretation. Surface any "unmatched" files in `~/Downloads` so the user knows nothing was silently consumed.
+3. Move Positions CSVs:
 
-Never commit or push — the user does that manually. This skill only moves files locally and updates the DB.
+   ```bash
+   for f in ~/Downloads/Demo*Positions*.csv; do
+     [ -e "$f" ] || continue
+     mv -n "$f" data/positions/
+   done
+   ```
+
+4. Report what moved and what stayed:
+
+   ```bash
+   echo "== data/transactions =="
+   ls -1 data/transactions/ || true
+   echo "== data/positions =="
+   ls -1 data/positions/ || true
+   echo "== ~/Downloads (remaining Demo files were kept because a same-name file already existed at the destination) =="
+   ls -1 ~/Downloads/ 2>/dev/null | grep -E '^Demo' || echo "(none)"
+   ```
+
+Never commit or push — the user runs those manually. This skill only moves files on the local filesystem.

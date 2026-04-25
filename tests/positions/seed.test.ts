@@ -119,8 +119,7 @@ describe("chooseSeed", () => {
     const seed = chooseSeed({
       transactions: [tx("2026-01-05"), tx("2026-04-20")],
       earliestSnapshot: earlySnap,
-      seedDate: config.seedDate,
-      seedValue: config.seedValue,
+      config,
     });
     expect(seed.asOf).toBe("2025-12-15");
     expect(seed.cash).toBe(earlySnap.cash);
@@ -130,8 +129,7 @@ describe("chooseSeed", () => {
     const seed = chooseSeed({
       transactions: [tx("2026-01-05"), tx("2026-04-20")],
       earliestSnapshot: lateSnap,
-      seedDate: config.seedDate,
-      seedValue: config.seedValue,
+      config,
     });
     expect(seed.asOf).toBe("2026-01-15");
     expect(seed.cash).toBe(12345);
@@ -141,8 +139,7 @@ describe("chooseSeed", () => {
     const seed = chooseSeed({
       transactions: [tx("2026-01-05")],
       earliestSnapshot: null,
-      seedDate: config.seedDate,
-      seedValue: config.seedValue,
+      config,
     });
     expect(seed.asOf).toBe("2026-01-15");
   });
@@ -151,8 +148,7 @@ describe("chooseSeed", () => {
     const seed = chooseSeed({
       transactions: [],
       earliestSnapshot: lateSnap,
-      seedDate: config.seedDate,
-      seedValue: config.seedValue,
+      config,
     });
     expect(seed.asOf).toBe("2026-04-23");
   });
