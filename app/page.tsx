@@ -13,6 +13,7 @@ import { PremiumByTickerCard } from "@/app/components/PremiumByTickerCard";
 import { CashYieldCard } from "@/app/components/CashYieldCard";
 import { CapitalAtRiskCard } from "@/app/components/CapitalAtRiskCard";
 import { MarkToMarketCard } from "@/app/components/MarkToMarketCard";
+import { ProjectionCard } from "@/app/components/ProjectionCard";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export default async function Home() {
     );
   }
 
-  const { state, sourceFiles, loadedAt, markToMarket } = data;
+  const { state, sourceFiles, loadedAt, markToMarket, projection, latestSnapshot } = data;
   const asOfDate =
     state.navSeries.at(-1)?.date ?? state.config.seedDate;
 
@@ -69,6 +70,13 @@ export default async function Home() {
         <div>
           <PremiumsCard state={state} />
         </div>
+      </div>
+
+      <div className="mb-4">
+        <ProjectionCard
+          projection={projection}
+          asOfDate={latestSnapshot?.asOf?.slice(0, 10)}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
