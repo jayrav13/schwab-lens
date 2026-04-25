@@ -7,34 +7,43 @@ export function OnboardingCard({ dataDir, missing }: Props) {
       {missing === "csv" ? (
         <>
           <p className="text-gray-700 dark:text-gray-200 mb-4">
-            Drop a Schwab transactions CSV into{" "}
-            <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">{dataDir}</code> and
-            refresh this page. The newest file by modification time will be
-            used.
+            No transactions or positions ingested yet. Run the ingest skill
+            (or <code>npm run ingest</code>) after dropping brokerage CSV
+            exports under{" "}
+            <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">
+              {dataDir}/&lt;brokerage&gt;/&lt;account&gt;/
+            </code>
+            .
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Expected filename pattern:{" "}
-            <code>Demo_XXX*_Transactions_*.csv</code>. This directory is
+            Expected layout:{" "}
+            <code>data/schwab/&lt;masked-id&gt;/transactions/*.csv</code> and{" "}
+            <code>positions/*.csv</code>. The <code>data/</code> directory is
             gitignored — raw exports never reach the repo.
           </p>
         </>
       ) : (
         <>
           <p className="text-gray-700 dark:text-gray-200 mb-4">
-            No <code>config.json</code> found. Create{" "}
-            <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">
-              {dataDir}/config.json
-            </code>{" "}
-            with:
+            No primary account is configured. To get started:
           </p>
-          <pre className="bg-gray-900 dark:bg-black text-gray-100 rounded p-3 text-sm overflow-x-auto">
-{`{
-  "seedDate": "2026-01-15",
-  "seedValue": 12345
-}`}
-          </pre>
+          <ol className="list-decimal list-inside ml-4 mt-2 space-y-1 text-gray-700 dark:text-gray-200">
+            <li>
+              Run <code>/ingest</code> to import your CSVs from{" "}
+              <code>~/Downloads</code> into the DB.
+            </li>
+            <li>
+              Run{" "}
+              <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">
+                npm run account:configure -- --account=&lt;brokerage&gt;:&lt;id&gt;{" "}
+                --primary --seed-date=YYYY-MM-DD --seed-value=&lt;amount&gt;
+              </code>
+            </li>
+            <li>Reload this page.</li>
+          </ol>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-            Seed values are personal — the file is gitignored.
+            Per-account seed and primary-account selection live in{" "}
+            <code>data/portfolio.db</code> (gitignored).
           </p>
         </>
       )}
