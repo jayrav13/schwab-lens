@@ -4,15 +4,10 @@ import { fetchQuotes, type Quote } from "@/lib/market/quotes";
 import { loadHistoricalCloses } from "@/lib/market/historical";
 import { computePortfolioValueSeries } from "@/lib/model/metrics/portfolio_value";
 import { computeMarkToMarket, type MarkToMarket } from "@/lib/model/metrics/mark_to_market";
-import { computeProjection, type ProjectionResult } from "@/lib/model/metrics/projection";
 import type { Config, PortfolioState, Seed } from "@/lib/model/types";
 import type { PositionsSnapshot } from "@/lib/positions/types";
 import { yesterdayInET } from "@/lib/util/dates";
 import { loadDashboardSource, openProductionDb } from "@/lib/server/dashboardSource";
-
-export type DashboardProjection =
-  | ProjectionResult
-  | { kind: "unconfigured"; reason: "missing-rate" | "missing-target" };
 
 export type DashboardData =
   | {
@@ -22,7 +17,6 @@ export type DashboardData =
       loadedAt: string;
       markToMarket: MarkToMarket | null;
       latestSnapshot: PositionsSnapshot | null;
-      projection: DashboardProjection;
     }
   | { kind: "no-csv"; dataDir: string }
   | { kind: "no-config"; dataDir: string }
@@ -160,23 +154,6 @@ export async function loadDashboard(
       markToMarket = computeMarkToMarket(state, quoteMap, latestSnapshot ?? undefined);
     }
 
-    let projection: DashboardProjection;
-    if (account.expectedRealReturn === null) {
-      projection = { kind: "unconfigured", reason: "missing-rate" };
-    } else if (account.targetValue === null) {
-      projection = { kind: "unconfigured", reason: "missing-target" };
-    } else {
-      const navForProjection =
-        latestSnapshot?.totalValue ?? state.navSeries.at(-1)?.nav ?? account.seedValue;
-      const asOfForProjection = latestSnapshot?.asOf?.slice(0, 10) ?? yesterdayInET();
-      projection = computeProjection({
-        currentNav: navForProjection,
-        targetValue: account.targetValue,
-        expectedRealReturn: account.expectedRealReturn,
-        asOfDate: asOfForProjection,
-      });
-    }
-
     return {
       kind: "ready",
       state,
@@ -187,7 +164,6 @@ export async function loadDashboard(
       loadedAt: new Date().toISOString(),
       markToMarket,
       latestSnapshot: includeMarketData ? latestSnapshot : null,
-      projection,
     };
   } catch (err) {
     return { kind: "parse-error", message: err instanceof Error ? err.message : String(err) };

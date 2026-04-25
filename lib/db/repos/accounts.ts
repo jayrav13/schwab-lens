@@ -8,9 +8,6 @@ export type Account = {
   seedDate: string | null;
   seedValue: number | null;
   benchmark: string | null;
-  expectedRealReturn: number | null;
-  targetValue: number | null;
-  accountGroup: string | null;
   firstSeenAt: string;
   lastSeenAt: string;
 };
@@ -23,9 +20,6 @@ type AccountRow = {
   seed_date: string | null;
   seed_value: number | null;
   benchmark: string | null;
-  expected_real_return: number | null;
-  target_value: number | null;
-  account_group: string | null;
   first_seen_at: string;
   last_seen_at: string;
 };
@@ -39,9 +33,6 @@ function rowToAccount(r: AccountRow): Account {
     seedDate: r.seed_date,
     seedValue: r.seed_value,
     benchmark: r.benchmark,
-    expectedRealReturn: r.expected_real_return,
-    targetValue: r.target_value,
-    accountGroup: r.account_group,
     firstSeenAt: r.first_seen_at,
     lastSeenAt: r.last_seen_at,
   };
@@ -111,31 +102,4 @@ export function updateAccountBenchmark(
   benchmark: string | null,
 ): void {
   db.prepare("UPDATE accounts SET benchmark = ? WHERE id = ?").run(benchmark, accountId);
-}
-
-export function updateAccountReturn(
-  db: Db,
-  accountId: number,
-  rate: number | null,
-): void {
-  db.prepare("UPDATE accounts SET expected_real_return = ? WHERE id = ?")
-    .run(rate, accountId);
-}
-
-export function updateAccountTarget(
-  db: Db,
-  accountId: number,
-  target: number | null,
-): void {
-  db.prepare("UPDATE accounts SET target_value = ? WHERE id = ?")
-    .run(target, accountId);
-}
-
-export function updateAccountGroup(
-  db: Db,
-  accountId: number,
-  group: string | null,
-): void {
-  db.prepare("UPDATE accounts SET account_group = ? WHERE id = ?")
-    .run(group, accountId);
 }

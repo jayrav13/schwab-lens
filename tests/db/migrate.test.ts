@@ -109,17 +109,4 @@ describe("runMigrations against db/migrations/", () => {
       .all() as Array<{ slug: string }>).map((r) => r.slug);
     expect(brokerages).toEqual(["chase", "fidelity", "robinhood", "schwab"]);
   });
-
-  it("adds expected_real_return, target_value, account_group columns to accounts", () => {
-    const db = openDb(":memory:");
-    runMigrations(db, path.join(process.cwd(), "db", "migrations"));
-
-    const cols = (db
-      .prepare("PRAGMA table_info('accounts')")
-      .all() as Array<{ name: string }>).map((r) => r.name);
-
-    for (const c of ["expected_real_return", "target_value", "account_group"]) {
-      expect(cols).toContain(c);
-    }
-  });
 });

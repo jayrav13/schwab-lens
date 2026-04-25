@@ -54,41 +54,4 @@ describe("configureAccount", () => {
     const db = freshDb();
     expect(() => configureAccount(db, { account: "bad-format" })).toThrow(/--account/);
   });
-
-  it("sets expectedRealReturn, targetValue, accountGroup", () => {
-    const db = freshDb();
-    configureAccount(db, {
-      account: "schwab:999",
-      expectedRealReturn: 0.07,
-      targetValue: 1_000_000,
-      accountGroup: "Managed",
-    });
-    const got = getAccountByExternal(db, "schwab", "999");
-    expect(got?.expectedRealReturn).toBe(0.07);
-    expect(got?.targetValue).toBe(1_000_000);
-    expect(got?.accountGroup).toBe("Managed");
-  });
-
-  it("clears accountGroup when passed empty string", () => {
-    const db = freshDb();
-    configureAccount(db, { account: "schwab:999", accountGroup: "Managed" });
-    configureAccount(db, { account: "schwab:999", accountGroup: "" });
-    expect(getAccountByExternal(db, "schwab", "999")?.accountGroup).toBeNull();
-  });
-
-  it("rejects non-positive target", () => {
-    const db = freshDb();
-    expect(() => configureAccount(db, { account: "schwab:999", targetValue: 0 }))
-      .toThrow(/target/i);
-    expect(() => configureAccount(db, { account: "schwab:999", targetValue: -10 }))
-      .toThrow(/target/i);
-  });
-
-  it("rejects expectedRealReturn <= -1", () => {
-    const db = freshDb();
-    expect(() => configureAccount(db, { account: "schwab:999", expectedRealReturn: -1 }))
-      .toThrow(/return/i);
-    expect(() => configureAccount(db, { account: "schwab:999", expectedRealReturn: -2 }))
-      .toThrow(/return/i);
-  });
 });
