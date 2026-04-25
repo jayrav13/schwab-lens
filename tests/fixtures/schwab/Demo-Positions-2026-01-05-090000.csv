@@ -1,0 +1,7 @@
+"Positions for account Demo ...999 as of 09:00 AM ET, 2026/01/05"
+
+"Symbol","Description","Qty (Quantity)","Price","Mkt Val (Market Value)","Cost Basis","Asset Type"
+"MADEUP","MADEUP INC","10","$55.00","$550.00","$500.00","Equity"
+"FAKE 01/09/2026 10.00 P","PUT FAKE EXP 01/09/26","-1","$0.50","-$50.00","--","Option"
+"Cash & Cash Investments","","","","$9,599.34","","Cash"
+"Account Total","","","","$10,099.34","","--"
