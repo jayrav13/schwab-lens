@@ -92,7 +92,7 @@ export function ProjectionCard({ projection, asOfDate }: Props) {
       <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
         Projection
       </h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Years to target</p>
           <p className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
