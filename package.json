@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "ingest": "tsx scripts/ingest.ts",
-    "account:configure": "tsx scripts/account-configure.ts"
+    "account:configure": "tsx scripts/account-configure.ts",
+    "account:show": "tsx scripts/account-show.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

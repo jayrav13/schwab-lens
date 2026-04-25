@@ -9,6 +9,9 @@ import {
   updateAccountSeed,
   updateAccountLabel,
   updateAccountBenchmark,
+  updateAccountReturn,
+  updateAccountTarget,
+  updateAccountGroup,
 } from "@/lib/db/repos/accounts";
 
 function freshDb(): Db {
@@ -67,5 +70,41 @@ describe("accounts repo", () => {
     const got = getAccountByExternal(db, "schwab", "999");
     expect(got?.label).toBe("Renamed");
     expect(got?.benchmark).toBe("SPY");
+  });
+
+  it("Account row exposes expectedRealReturn, targetValue, accountGroup as null by default", () => {
+    const db = freshDb();
+    upsertAccount(db, { brokerageSlug: "schwab", externalId: "999", label: "X" });
+    const got = getAccountByExternal(db, "schwab", "999");
+    expect(got?.expectedRealReturn).toBeNull();
+    expect(got?.targetValue).toBeNull();
+    expect(got?.accountGroup).toBeNull();
+  });
+
+  it("updateAccountReturn sets and clears expected_real_return", () => {
+    const db = freshDb();
+    const id = upsertAccount(db, { brokerageSlug: "schwab", externalId: "999", label: "X" });
+    updateAccountReturn(db, id, 0.07);
+    expect(getAccountByExternal(db, "schwab", "999")?.expectedRealReturn).toBe(0.07);
+    updateAccountReturn(db, id, null);
+    expect(getAccountByExternal(db, "schwab", "999")?.expectedRealReturn).toBeNull();
+  });
+
+  it("updateAccountTarget sets and clears target_value", () => {
+    const db = freshDb();
+    const id = upsertAccount(db, { brokerageSlug: "schwab", externalId: "999", label: "X" });
+    updateAccountTarget(db, id, 1_000_000);
+    expect(getAccountByExternal(db, "schwab", "999")?.targetValue).toBe(1_000_000);
+    updateAccountTarget(db, id, null);
+    expect(getAccountByExternal(db, "schwab", "999")?.targetValue).toBeNull();
+  });
+
+  it("updateAccountGroup sets and clears account_group", () => {
+    const db = freshDb();
+    const id = upsertAccount(db, { brokerageSlug: "schwab", externalId: "999", label: "X" });
+    updateAccountGroup(db, id, "Managed");
+    expect(getAccountByExternal(db, "schwab", "999")?.accountGroup).toBe("Managed");
+    updateAccountGroup(db, id, null);
+    expect(getAccountByExternal(db, "schwab", "999")?.accountGroup).toBeNull();
   });
 });
