@@ -79,7 +79,7 @@ describe("buildSeedFromSnapshot", () => {
 
 describe("chooseSeed", () => {
   const config: Config = {
-    seedDate: "2025-12-31",
+    seedDate: "2026-01-01",
     seedValue: 12345,
     marketData: { enabled: true },
   };
@@ -131,7 +131,7 @@ describe("chooseSeed", () => {
       earliestSnapshot: lateSnap,
       config,
     });
-    expect(seed.asOf).toBe("2025-12-31");
+    expect(seed.asOf).toBe("2026-01-01");
     expect(seed.cash).toBe(12345);
   });
 
@@ -141,7 +141,7 @@ describe("chooseSeed", () => {
       earliestSnapshot: null,
       config,
     });
-    expect(seed.asOf).toBe("2025-12-31");
+    expect(seed.asOf).toBe("2026-01-01");
   });
 
   it("uses the snapshot seed when there are no transactions", () => {

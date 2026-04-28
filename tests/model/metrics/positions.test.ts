@@ -7,7 +7,7 @@ import type { Transaction } from "@/lib/csv/types";
 import type { Seed } from "@/lib/model/types";
 
 const emptySeed: Seed = {
-  asOf: "2025-12-31",
+  asOf: "2026-01-01",
   cash: 0,
   initialShares: [],
   initialOptions: [],

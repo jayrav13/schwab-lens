@@ -4,10 +4,10 @@ import { parseConfig } from "@/lib/config";
 describe("parseConfig", () => {
   it("parses a valid config JSON with marketData disabled by default", () => {
     const c = parseConfig(
-      JSON.stringify({ seedDate: "2025-12-31", seedValue: 12345 }),
+      JSON.stringify({ seedDate: "2026-01-01", seedValue: 12345 }),
     );
     expect(c).toEqual({
-      seedDate: "2025-12-31",
+      seedDate: "2026-01-01",
       seedValue: 12345,
       marketData: { enabled: false },
     });
@@ -16,7 +16,7 @@ describe("parseConfig", () => {
   it("parses marketData.enabled=true when set", () => {
     const c = parseConfig(
       JSON.stringify({
-        seedDate: "2025-12-31",
+        seedDate: "2026-01-01",
         seedValue: 12345,
         marketData: { enabled: true },
       }),
@@ -38,7 +38,7 @@ describe("parseConfig", () => {
 
   it("throws on non-numeric seedValue", () => {
     expect(() =>
-      parseConfig(JSON.stringify({ seedDate: "2025-12-31", seedValue: "25k" })),
+      parseConfig(JSON.stringify({ seedDate: "2026-01-01", seedValue: "25k" })),
     ).toThrow(/seedValue/);
   });
 
@@ -51,7 +51,7 @@ describe("parseConfig benchmark field", () => {
   it("omits benchmark when the field is absent", () => {
     const cfg = parseConfig(
       JSON.stringify({
-        seedDate: "2025-12-31",
+        seedDate: "2026-01-01",
         seedValue: 12345,
         marketData: { enabled: true },
       }),
@@ -62,7 +62,7 @@ describe("parseConfig benchmark field", () => {
   it("accepts a non-empty string benchmark", () => {
     const cfg = parseConfig(
       JSON.stringify({
-        seedDate: "2025-12-31",
+        seedDate: "2026-01-01",
         seedValue: 12345,
         marketData: { enabled: true },
         benchmark: "SPY",
@@ -74,7 +74,7 @@ describe("parseConfig benchmark field", () => {
   it("accepts explicit null as off", () => {
     const cfg = parseConfig(
       JSON.stringify({
-        seedDate: "2025-12-31",
+        seedDate: "2026-01-01",
         seedValue: 12345,
         marketData: { enabled: true },
         benchmark: null,
@@ -86,7 +86,7 @@ describe("parseConfig benchmark field", () => {
   it("treats a non-string, non-null benchmark as undefined", () => {
     const cfg = parseConfig(
       JSON.stringify({
-        seedDate: "2025-12-31",
+        seedDate: "2026-01-01",
         seedValue: 12345,
         marketData: { enabled: true },
         benchmark: 42,
@@ -98,7 +98,7 @@ describe("parseConfig benchmark field", () => {
   it("treats an empty string benchmark as undefined", () => {
     const cfg = parseConfig(
       JSON.stringify({
-        seedDate: "2025-12-31",
+        seedDate: "2026-01-01",
         seedValue: 12345,
         marketData: { enabled: true },
         benchmark: "",

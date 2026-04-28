@@ -12,7 +12,7 @@ describe("integration: fake portfolio CSV", () => {
   );
   const txs = parseSchwabCsv(csv);
   const config = {
-    seedDate: "2025-12-31",
+    seedDate: "2026-01-01",
     seedValue: 10000,
     marketData: { enabled: false },
   };

@@ -7,7 +7,7 @@ import {
 import type { NavPoint } from "@/lib/model/types";
 
 const daily: NavPoint[] = [
-  { date: "2025-12-31", nav: 100 },
+  { date: "2026-01-01", nav: 100 },
   { date: "2026-02-01", nav: 110 },
   { date: "2026-03-01", nav: 120 },
   { date: "2026-04-01", nav: 130 },
@@ -45,7 +45,7 @@ describe("filterSeriesByRange", () => {
   it("'6M' keeps points within 180 days of asOfDate", () => {
     const out = filterSeriesByRange(daily, "6M", "2026-04-20");
     expect(out.map((p) => p.date)).toEqual([
-      "2025-12-31",
+      "2026-01-01",
       "2026-02-01",
       "2026-03-01",
       "2026-04-01",
@@ -56,12 +56,12 @@ describe("filterSeriesByRange", () => {
   it("'YTD' keeps points from Jan 1 of asOfDate's year onward", () => {
     const mixed: NavPoint[] = [
       { date: "2025-11-01", nav: 90 },
-      { date: "2025-12-31", nav: 95 },
-      { date: "2025-12-31", nav: 100 },
+      { date: "2026-01-01", nav: 95 },
+      { date: "2026-01-01", nav: 100 },
       { date: "2026-04-20", nav: 140 },
     ];
     const out = filterSeriesByRange(mixed, "YTD", "2026-04-20");
-    expect(out.map((p) => p.date)).toEqual(["2025-12-31", "2026-04-20"]);
+    expect(out.map((p) => p.date)).toEqual(["2026-01-01", "2026-04-20"]);
   });
 
   it("window entirely before series start returns empty", () => {
@@ -85,7 +85,7 @@ describe("filterSeriesByRange", () => {
 
 describe("nearestPointByMs", () => {
   const s: NavPoint[] = [
-    { date: "2025-12-31", nav: 100 },
+    { date: "2026-01-01", nav: 100 },
     { date: "2026-02-01", nav: 110 },
     { date: "2026-03-01", nav: 120 },
   ];
@@ -96,7 +96,7 @@ describe("nearestPointByMs", () => {
 
   it("returns the first point when target is before the series", () => {
     const out = nearestPointByMs(s, Date.parse("2025-06-01"));
-    expect(out?.date).toBe("2025-12-31");
+    expect(out?.date).toBe("2026-01-01");
   });
 
   it("returns the last point when target is after the series", () => {
@@ -110,22 +110,22 @@ describe("nearestPointByMs", () => {
   });
 
   it("tiebreak: equidistant target picks the earlier point", () => {
-    const jan = Date.parse("2025-12-31");
+    const jan = Date.parse("2026-01-01");
     const feb = Date.parse("2026-02-01");
     const mid = jan + (feb - jan) / 2;
     const out = nearestPointByMs(s, mid);
-    expect(out?.date).toBe("2025-12-31");
+    expect(out?.date).toBe("2026-01-01");
   });
 });
 
 describe("computeYRange", () => {
   it("computes min/max across multi-series with a 10% pad", () => {
     const a: NavPoint[] = [
-      { date: "2025-12-31", nav: 100 },
+      { date: "2026-01-01", nav: 100 },
       { date: "2026-02-01", nav: 200 },
     ];
     const b: NavPoint[] = [
-      { date: "2025-12-31", nav: 150 },
+      { date: "2026-01-01", nav: 150 },
       { date: "2026-02-01", nav: 180 },
     ];
     const { yMin, yMax } = computeYRange([a, b], 100);
@@ -136,7 +136,7 @@ describe("computeYRange", () => {
 
   it("always includes seedValue in the range", () => {
     const a: NavPoint[] = [
-      { date: "2025-12-31", nav: 500 },
+      { date: "2026-01-01", nav: 500 },
       { date: "2026-02-01", nav: 600 },
     ];
     const { yMin, yMax } = computeYRange([a], 100);
@@ -146,7 +146,7 @@ describe("computeYRange", () => {
 
   it("single-series: min/max from that series + seed", () => {
     const a: NavPoint[] = [
-      { date: "2025-12-31", nav: 120 },
+      { date: "2026-01-01", nav: 120 },
       { date: "2026-02-01", nav: 150 },
     ];
     const { yMin, yMax } = computeYRange([a], 100);

@@ -4,7 +4,7 @@ import type { PortfolioState } from "@/lib/model/types";
 
 function baseState(over: Partial<PortfolioState> = {}): PortfolioState {
   return {
-    config: { seedDate: "2025-12-31", seedValue: 10000, marketData: { enabled: false } },
+    config: { seedDate: "2026-01-01", seedValue: 10000, marketData: { enabled: false } },
     transactions: [],
     cashLedger: [{ date: "2026-02-01", balance: 5000 }],
     externalFlows: [],

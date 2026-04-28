@@ -16,15 +16,15 @@ function tx(overrides: Partial<Transaction>): Transaction {
 }
 
 describe("buildPortfolio", () => {
-  const config = { seedDate: "2025-12-31", seedValue: 12345, marketData: { enabled: false } };
+  const config = { seedDate: "2026-01-01", seedValue: 12345, marketData: { enabled: false } };
   const seed = seedFromConfig(config);
 
   it("produces a seed-only state from no transactions", () => {
     const s = buildPortfolio([], config, seed);
     expect(s.cashLedger).toEqual([
-      { date: "2025-12-31", balance: 12345 },
+      { date: "2026-01-01", balance: 12345 },
     ]);
-    expect(s.navSeries).toEqual([{ date: "2025-12-31", nav: 12345 }]);
+    expect(s.navSeries).toEqual([{ date: "2026-01-01", nav: 12345 }]);
     expect(s.premiumTotals).toEqual({ gross: 0, closed: 0, net: 0 });
     expect(s.openOptionPositions).toEqual([]);
     expect(s.openSharePositions).toEqual([]);
@@ -93,7 +93,7 @@ describe("buildPortfolio", () => {
   it("drops transactions that predate the seed date", () => {
     const s = buildPortfolio(
       [
-        tx({ amount: 99999, tradeDate: "2025-12-31" }),
+        tx({ amount: 99999, tradeDate: "2025-12-30" }),
         tx({ amount: 100, tradeDate: "2026-01-05" }),
       ],
       config,
