@@ -33,10 +33,7 @@ function parseTradeDate(s: string | undefined): string | null {
   return null;
 }
 
-export function parseTransactions(
-  content: string,
-  _sourceFile: string,
-): CanonicalTransaction[] {
+export function parseTransactions(content: string): CanonicalTransaction[] {
   const result = Papa.parse<RawRow>(content, {
     header: true,
     skipEmptyLines: true,

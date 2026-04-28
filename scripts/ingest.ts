@@ -59,7 +59,7 @@ export async function ingest(opts: IngestOptions): Promise<IngestSummary> {
       summary.accountsTouched.push(identity.externalId);
     }
     const content = readFileSync(filepath, "utf8");
-    for (const tx of parseTransactions(content, f)) {
+    for (const tx of parseTransactions(content)) {
       const { inserted } = insertTransaction(db, account.id, tx, f);
       if (inserted) summary.rowsInserted++;
       else summary.rowsSkippedDuplicate++;
