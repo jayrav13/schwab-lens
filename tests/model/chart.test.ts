@@ -56,7 +56,7 @@ describe("filterSeriesByRange", () => {
   it("'YTD' keeps points from Jan 1 of asOfDate's year onward", () => {
     const mixed: NavPoint[] = [
       { date: "2025-11-01", nav: 90 },
-      { date: "2026-01-01", nav: 95 },
+      { date: "2025-12-31", nav: 95 },
       { date: "2026-01-01", nav: 100 },
       { date: "2026-04-20", nav: 140 },
     ];
