@@ -1,0 +1,3 @@
+"Date","Action","Symbol","Description","Quantity","Price","Fees & Comm","Amount"
+"01/05/2026","Buy","ACME","ACME CORP","100","$50.00","$0.00","-$5000.00"
+"01/06/2026","Sell to Open","ACME 01/30/2026 55.00 C","CALL ACME $55","1","$0.50","$1.00","$49.00"
