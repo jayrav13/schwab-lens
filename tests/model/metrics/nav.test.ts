@@ -22,16 +22,16 @@ function seed(asOf: string, cash: number): Seed {
 
 describe("computeNavSeries", () => {
   it("starts at seed value on seed date", () => {
-    const series = computeNavSeries([], seed("2026-01-15", 12345));
-    expect(series).toEqual([{ date: "2026-01-15", nav: 12345 }]);
+    const series = computeNavSeries([], seed("2025-12-31", 12345));
+    expect(series).toEqual([{ date: "2025-12-31", nav: 12345 }]);
   });
 
   it("adds realized cash flows", () => {
     const series = computeNavSeries(
       [tx({ amount: 100, tradeDate: "2026-01-05" })],
-      seed("2026-01-15", 12345),
+      seed("2025-12-31", 12345),
     );
-    expect(series.at(-1)).toEqual({ date: "2026-01-05", nav: 25100 });
+    expect(series.at(-1)).toEqual({ date: "2026-01-05", nav: 12445 });
   });
 
   it("treats put-assignment cash/shares as NAV-neutral", () => {
@@ -47,7 +47,7 @@ describe("computeNavSeries", () => {
           tradeDate: "2026-01-30",
         }),
       ],
-      seed("2026-01-15", 12345),
+      seed("2025-12-31", 12345),
     );
     expect(series.at(-1)?.nav).toBeCloseTo(12345, 2);
   });

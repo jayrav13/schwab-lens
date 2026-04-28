@@ -16,15 +16,15 @@ function tx(overrides: Partial<Transaction>): Transaction {
 }
 
 describe("buildPortfolio", () => {
-  const config = { seedDate: "2026-01-15", seedValue: 12345, marketData: { enabled: false } };
+  const config = { seedDate: "2025-12-31", seedValue: 12345, marketData: { enabled: false } };
   const seed = seedFromConfig(config);
 
   it("produces a seed-only state from no transactions", () => {
     const s = buildPortfolio([], config, seed);
     expect(s.cashLedger).toEqual([
-      { date: "2026-01-15", balance: 12345 },
+      { date: "2025-12-31", balance: 12345 },
     ]);
-    expect(s.navSeries).toEqual([{ date: "2026-01-15", nav: 12345 }]);
+    expect(s.navSeries).toEqual([{ date: "2025-12-31", nav: 12345 }]);
     expect(s.premiumTotals).toEqual({ gross: 0, closed: 0, net: 0 });
     expect(s.openOptionPositions).toEqual([]);
     expect(s.openSharePositions).toEqual([]);
@@ -45,7 +45,7 @@ describe("buildPortfolio", () => {
       config,
       seed,
     );
-    expect(s.navSeries.at(-1)!.nav).toBeCloseTo(25100, 2);
+    expect(s.navSeries.at(-1)!.nav).toBeCloseTo(12445, 2);
   });
 
   it("raises UnknownAction warning with count", () => {
@@ -99,6 +99,6 @@ describe("buildPortfolio", () => {
       config,
       seed,
     );
-    expect(s.cashLedger.at(-1)?.balance).toBe(25100);
+    expect(s.cashLedger.at(-1)?.balance).toBe(12445);
   });
 });

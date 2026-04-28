@@ -27,9 +27,9 @@ describe("computeCashLedger", () => {
         tx({ amount: 100, tradeDate: "2026-01-05" }),
         tx({ amount: -50, tradeDate: "2026-01-08" }),
       ],
-      seed("2026-01-15", 12345),
+      seed("2025-12-31", 12345),
     );
-    expect(cashLedger[0]).toEqual({ date: "2026-01-15", balance: 12345 });
+    expect(cashLedger[0]).toEqual({ date: "2025-12-31", balance: 12345 });
     expect(cashLedger.at(-1)).toEqual({ date: "2026-01-08", balance: 25050 });
     expect(finalCash).toBe(25050);
   });
@@ -40,10 +40,10 @@ describe("computeCashLedger", () => {
         tx({ amount: 10, tradeDate: "2026-01-05" }),
         tx({ amount: 20, tradeDate: "2026-01-05" }),
       ],
-      seed("2026-01-15", 100),
+      seed("2025-12-31", 100),
     );
     expect(cashLedger).toEqual([
-      { date: "2026-01-15", balance: 100 },
+      { date: "2025-12-31", balance: 100 },
       { date: "2026-01-05", balance: 130 },
     ]);
   });
@@ -64,7 +64,7 @@ describe("computeCashLedger", () => {
           tradeDate: "2026-02-05",
         }),
       ],
-      seed("2026-01-15", 12345),
+      seed("2025-12-31", 12345),
     );
     expect(externalFlows).toHaveLength(2);
     expect(cumulativeExternal).toBe(0);

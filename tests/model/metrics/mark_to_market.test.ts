@@ -5,7 +5,7 @@ import type { PositionsSnapshot } from "@/lib/positions/types";
 
 function stateWith(shares: { ticker: string; qty: number; cost: number }[]): PortfolioState {
   return {
-    config: { seedDate: "2026-01-15", seedValue: 10000, marketData: { enabled: true } },
+    config: { seedDate: "2025-12-31", seedValue: 10000, marketData: { enabled: true } },
     transactions: [],
     cashLedger: [{ date: "2026-03-01", balance: 5000 }],
     externalFlows: [],

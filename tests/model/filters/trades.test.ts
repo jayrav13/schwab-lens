@@ -15,7 +15,7 @@ function trade(
   outcome: ClosedTrade["outcome"],
   netPnL: number,
   daysHeld = 7,
-  openDate = "2026-01-15",
+  openDate = "2025-12-31",
 ): ClosedTrade {
   return {
     contract: { ticker, expiry: closeDate, strike: 100, type: "Put" },
@@ -71,7 +71,7 @@ describe("filterTrades", () => {
     const res = filterTrades(TRADES, {
       tickers: new Set(["AAPL"]),
       outcomes: new Set(["ClosedProfit"]),
-      from: "2026-01-15",
+      from: "2025-12-31",
       to: "2026-12-31",
     });
     expect(res).toHaveLength(1);
@@ -81,10 +81,10 @@ describe("filterTrades", () => {
 
 describe("sortTrades", () => {
   it("sorts by closeDate desc by default, tie-breaks by openDate asc", () => {
-    const a = trade("X", "2026-04-01", "Expired", 1, 1, "2026-01-15");
+    const a = trade("X", "2026-04-01", "Expired", 1, 1, "2025-12-31");
     const b = trade("X", "2026-04-01", "Expired", 1, 1, "2026-02-01");
     const res = sortTrades([b, a], DEFAULT_SORT);
-    expect(res.map((t) => t.openDate)).toEqual(["2026-01-15", "2026-02-01"]);
+    expect(res.map((t) => t.openDate)).toEqual(["2025-12-31", "2026-02-01"]);
   });
 
   it("sorts by closeDate asc", () => {
@@ -117,12 +117,12 @@ describe("parseTradesQuery", () => {
 
   it("parses all params", () => {
     const sp = new URLSearchParams(
-      "ticker=AAPL,NVDA&outcome=Expired,Assigned&from=2026-01-15&to=2026-04-23&sort=netPnL:asc",
+      "ticker=AAPL,NVDA&outcome=Expired,Assigned&from=2025-12-31&to=2026-04-23&sort=netPnL:asc",
     );
     const { filter, sort } = parseTradesQuery(sp);
     expect(filter.tickers).toEqual(new Set(["AAPL", "NVDA"]));
     expect(filter.outcomes).toEqual(new Set(["Expired", "Assigned"]));
-    expect(filter.from).toBe("2026-01-15");
+    expect(filter.from).toBe("2025-12-31");
     expect(filter.to).toBe("2026-04-23");
     expect(sort).toEqual({ key: "netPnL", dir: "asc" });
   });
@@ -149,14 +149,14 @@ describe("serializeTradesQuery", () => {
       {
         tickers: new Set(["AAPL", "NVDA"]),
         outcomes: new Set(["Expired"]),
-        from: "2026-01-15",
+        from: "2025-12-31",
       },
       { key: "netPnL", dir: "asc" },
     );
     const s = qs.toString();
     expect(s).toContain("ticker=AAPL%2CNVDA");
     expect(s).toContain("outcome=Expired");
-    expect(s).toContain("from=2026-01-15");
+    expect(s).toContain("from=2025-12-31");
     expect(s).toContain("sort=netPnL%3Aasc");
     expect(s).not.toContain("to=");
   });
@@ -165,7 +165,7 @@ describe("serializeTradesQuery", () => {
     const f: TradesFilter = {
       tickers: new Set(["AAPL"]),
       outcomes: new Set(["Assigned", "Expired"]),
-      from: "2026-01-15",
+      from: "2025-12-31",
       to: "2026-04-23",
     };
     const s: TradesSort = { key: "daysHeld", dir: "asc" };

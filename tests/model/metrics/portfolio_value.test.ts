@@ -3,7 +3,7 @@ import { computePortfolioValueSeries } from "@/lib/model/metrics/portfolio_value
 import type { PortfolioState, Seed } from "@/lib/model/types";
 import type { Transaction } from "@/lib/csv/types";
 
-function seed(asOf = "2026-01-15", cash = 10000): Seed {
+function seed(asOf = "2025-12-31", cash = 10000): Seed {
   return { asOf, cash, initialShares: [], initialOptions: [] };
 }
 
@@ -13,12 +13,12 @@ function stateWith(opts: {
 }): PortfolioState {
   return {
     config: {
-      seedDate: "2026-01-15",
+      seedDate: "2025-12-31",
       seedValue: 10000,
       marketData: { enabled: true },
     },
     transactions: opts.transactions ?? [],
-    cashLedger: opts.cashLedger ?? [{ date: "2026-01-15", balance: 10000 }],
+    cashLedger: opts.cashLedger ?? [{ date: "2025-12-31", balance: 10000 }],
     externalFlows: [],
     navSeries: [],
     openOptionPositions: [],
@@ -90,7 +90,7 @@ describe("computePortfolioValueSeries", () => {
     const result = computePortfolioValueSeries(
       stateWith({
         cashLedger: [
-          { date: "2026-01-15", balance: 10000 },
+          { date: "2025-12-31", balance: 10000 },
           { date: "2026-01-03", balance: 9500 },
         ],
       }),
@@ -111,7 +111,7 @@ describe("computePortfolioValueSeries", () => {
       stateWith({
         transactions: [buyTx("2026-01-02", "ACME", 100, 50)],
         cashLedger: [
-          { date: "2026-01-15", balance: 10000 },
+          { date: "2025-12-31", balance: 10000 },
           { date: "2026-01-02", balance: 5000 },
         ],
       }),
@@ -177,10 +177,10 @@ describe("computePortfolioValueSeries", () => {
   it("counts seed.initialShares from the first date in range", () => {
     const result = computePortfolioValueSeries(
       stateWith({
-        cashLedger: [{ date: "2026-01-15", balance: 5000 }],
+        cashLedger: [{ date: "2025-12-31", balance: 5000 }],
       }),
       {
-        asOf: "2026-01-15",
+        asOf: "2025-12-31",
         cash: 5000,
         initialShares: [{ ticker: "ACME", shares: 10, costBasis: 100 }],
         initialOptions: [],
@@ -230,7 +230,7 @@ describe("computePortfolioValueSeries", () => {
   it("bounds the series by [seed.asOf, endDate]", () => {
     const result = computePortfolioValueSeries(
       stateWith({
-        cashLedger: [{ date: "2026-01-15", balance: 1000 }],
+        cashLedger: [{ date: "2025-12-31", balance: 1000 }],
       }),
       seed("2026-01-02", 1000),
       {

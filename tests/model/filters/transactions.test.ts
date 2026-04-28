@@ -125,12 +125,12 @@ describe("parseTransactionsQuery / serializeTransactionsQuery", () => {
 
   it("parses all params and ignores unknown actions", () => {
     const sp = new URLSearchParams(
-      "action=SellToOpen,BogusAction,BuyToClose&ticker=AAPL&from=2026-01-15&to=2026-04-23&q=dividend&sort=amount:asc",
+      "action=SellToOpen,BogusAction,BuyToClose&ticker=AAPL&from=2025-12-31&to=2026-04-23&q=dividend&sort=amount:asc",
     );
     const { filter, sort } = parseTransactionsQuery(sp);
     expect(filter.actions).toEqual(new Set(["SellToOpen", "BuyToClose"]));
     expect(filter.tickers).toEqual(new Set(["AAPL"]));
-    expect(filter.from).toBe("2026-01-15");
+    expect(filter.from).toBe("2025-12-31");
     expect(filter.to).toBe("2026-04-23");
     expect(filter.q).toBe("dividend");
     expect(sort).toEqual({ key: "amount", dir: "asc" });
@@ -140,7 +140,7 @@ describe("parseTransactionsQuery / serializeTransactionsQuery", () => {
     const f: TransactionsFilter = {
       actions: new Set(["SellToOpen"]),
       tickers: new Set(["AAPL", "NVDA"]),
-      from: "2026-01-15",
+      from: "2025-12-31",
       to: "2026-04-23",
       q: "hello",
     };
