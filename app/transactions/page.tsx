@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { loadDashboard } from "@/lib/server/dashboard";
 import { TransactionsPageClient } from "@/app/components/TransactionsPageClient";
 
@@ -11,7 +12,7 @@ export default async function TransactionsPage() {
       <main className="p-6 max-w-7xl mx-auto">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           No data loaded. Head back to the{" "}
-          <a href="/" className="underline">dashboard</a> to get started.
+          <Link href="/" className="underline">dashboard</Link> to get started.
         </p>
       </main>
     );
