@@ -21,7 +21,7 @@ export function runMigrations(db: Database.Database, dir: string): void {
   sqlExec(db, TRACKING_TABLE_DDL);
 
   const applied = new Set(
-    db.prepare("SELECT name FROM migrations").all().map((r: { name: string }) => r.name),
+    (db.prepare("SELECT name FROM migrations").all() as { name: string }[]).map((r) => r.name),
   );
 
   let files: string[] = [];

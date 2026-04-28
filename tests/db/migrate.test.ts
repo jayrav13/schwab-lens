@@ -37,7 +37,9 @@ describe("runMigrations", () => {
     });
     runMigrations(db, migDir);
     expect(
-      db.prepare("SELECT name FROM migrations ORDER BY id").all().map((r: { name: string }) => r.name),
+      (db.prepare("SELECT name FROM migrations ORDER BY id").all() as { name: string }[]).map(
+        (r) => r.name,
+      ),
     ).toEqual(["001-a.sql", "002-b.sql"]);
   });
 
@@ -72,10 +74,11 @@ describe("001-initial-schema.sql", () => {
   it("creates all five tables", () => {
     const db = new Database(":memory:");
     runMigrations(db, SCHEMA_DIR);
-    const tables = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
-      .all()
-      .map((r: { name: string }) => r.name);
+    const tables = (
+      db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+        .all() as { name: string }[]
+    ).map((r) => r.name);
     expect(tables).toEqual(
       expect.arrayContaining([
         "accounts",
