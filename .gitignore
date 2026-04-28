@@ -2,6 +2,7 @@
 
 # Internal tooling
 .superpowers/
+.worktrees/
 
 # Raw financial data — never commit
 /sheets/
