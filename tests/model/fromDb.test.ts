@@ -35,35 +35,27 @@ const baseTxRow: TransactionRow = {
 
 describe("actionFromCanonical", () => {
   it("maps BUY to Buy", () => {
-    expect(actionFromCanonical("BUY", "Buy")).toBe("Buy");
+    expect(actionFromCanonical("BUY")).toBe("Buy");
   });
 
   it("maps SELL_TO_OPEN to SellToOpen", () => {
-    expect(actionFromCanonical("SELL_TO_OPEN", "Sell to Open")).toBe(
-      "SellToOpen",
-    );
+    expect(actionFromCanonical("SELL_TO_OPEN")).toBe("SellToOpen");
   });
 
   it("maps DIVIDEND to QualifiedDividend", () => {
-    expect(actionFromCanonical("DIVIDEND", "Qualified Dividend")).toBe(
-      "QualifiedDividend",
-    );
+    expect(actionFromCanonical("DIVIDEND")).toBe("QualifiedDividend");
   });
 
   it("maps INTEREST to BankInterest", () => {
-    expect(actionFromCanonical("INTEREST", "Bank Interest")).toBe(
-      "BankInterest",
-    );
+    expect(actionFromCanonical("INTEREST")).toBe("BankInterest");
   });
 
   it("maps JOURNAL to Journal", () => {
-    expect(actionFromCanonical("JOURNAL", "Journal")).toBe("Journal");
+    expect(actionFromCanonical("JOURNAL")).toBe("Journal");
   });
 
   it("falls back to Unknown for UNKNOWN", () => {
-    expect(actionFromCanonical("UNKNOWN", "Some weird action")).toBe(
-      "Unknown",
-    );
+    expect(actionFromCanonical("UNKNOWN")).toBe("Unknown");
   });
 });
 

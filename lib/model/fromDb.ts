@@ -30,12 +30,12 @@ const ACTION_MAP: Record<string, Action> = {
   TRANSFER_OUT: "WireSent",
 };
 
-export function actionFromCanonical(canonical: string, _raw: string): Action {
+export function actionFromCanonical(canonical: string): Action {
   return ACTION_MAP[canonical] ?? "Unknown";
 }
 
 export function transactionFromRow(row: TransactionRow): Transaction {
-  const action = actionFromCanonical(row.action_canonical, row.action_raw);
+  const action = actionFromCanonical(row.action_canonical);
   const optionLeg = parseOptionSymbol(row.symbol);
   const tx: Transaction = {
     tradeDate: row.trade_date,
