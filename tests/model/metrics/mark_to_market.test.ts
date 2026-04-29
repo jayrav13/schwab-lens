@@ -26,7 +26,7 @@ describe("computeMarkToMarket", () => {
   it("computes market value and unrealized P&L from current quotes", () => {
     const state = stateWith([{ ticker: "AAA", qty: 100, cost: 20 }]);
     const mtm = computeMarkToMarket(state, {
-      AAA: { ticker: "AAA", price: 25, asOf: "2026-03-01T12:00:00Z" },
+      AAA: { ticker: "AAA", price: 25, asOf: "2026-03-01T12:00:00Z", prevClose: null },
     });
     expect(mtm.rows[0].marketValue).toBe(2500);
     expect(mtm.rows[0].unrealized).toBe(500);
@@ -41,7 +41,7 @@ describe("computeMarkToMarket", () => {
       { ticker: "BBB", qty: 50, cost: 40 },
     ]);
     const mtm = computeMarkToMarket(state, {
-      AAA: { ticker: "AAA", price: 25, asOf: "2026-03-01T12:00:00Z" },
+      AAA: { ticker: "AAA", price: 25, asOf: "2026-03-01T12:00:00Z", prevClose: null },
     });
     expect(mtm.missingQuotes).toEqual(["BBB"]);
     const bbb = mtm.rows.find((r) => r.ticker === "BBB")!;
@@ -53,7 +53,7 @@ describe("computeMarkToMarket", () => {
   it("flags stale quotes on each row", () => {
     const state = stateWith([{ ticker: "AAA", qty: 100, cost: 20 }]);
     const mtm = computeMarkToMarket(state, {
-      AAA: { ticker: "AAA", price: 25, asOf: "...", stale: true },
+      AAA: { ticker: "AAA", price: 25, asOf: "...", stale: true, prevClose: null },
     });
     expect(mtm.rows[0].quoteStale).toBe(true);
   });
@@ -96,7 +96,7 @@ describe("computeMarkToMarket — with snapshot", () => {
     const state = stateWith([{ ticker: "AAA", qty: 100, cost: 20 }]);
     const mtm = computeMarkToMarket(
       state,
-      { AAA: { ticker: "AAA", price: 25, asOf: "2026-03-10T09:00:00Z" } },
+      { AAA: { ticker: "AAA", price: 25, asOf: "2026-03-10T09:00:00Z", prevClose: null } },
       snapshot,
     );
     const row = mtm.rows.find((r) => r.ticker === "AAA")!;
@@ -108,7 +108,7 @@ describe("computeMarkToMarket — with snapshot", () => {
     const state = stateWith([{ ticker: "AAA", qty: 100, cost: 20 }]);
     const mtm = computeMarkToMarket(
       state,
-      { AAA: { ticker: "AAA", price: 25, asOf: "2026-03-10T09:00:00Z" } },
+      { AAA: { ticker: "AAA", price: 25, asOf: "2026-03-10T09:00:00Z", prevClose: null } },
       snapshot,
     );
     expect(mtm.cash).toBe(7777);
@@ -135,7 +135,7 @@ describe("computeMarkToMarket — with snapshot", () => {
     ]);
     const mtm = computeMarkToMarket(
       state,
-      { BBB: { ticker: "BBB", price: 42, asOf: "2026-03-10T09:00:00Z" } },
+      { BBB: { ticker: "BBB", price: 42, asOf: "2026-03-10T09:00:00Z", prevClose: null } },
       snapshot,
     );
     const bbb = mtm.rows.find((r) => r.ticker === "BBB")!;
