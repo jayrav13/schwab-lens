@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { loadAccountOptionsView } from "@/lib/server/account";
+import { getAccountTabFlags } from "@/lib/server/accountTabs";
+import { AccountTabs } from "@/app/components/AccountTabs";
 import { AttentionBanner } from "@/app/components/AttentionBanner";
 import { SummaryStrip } from "@/app/components/SummaryStrip";
 import { NavCard } from "@/app/components/NavCard";
@@ -22,20 +24,28 @@ export default async function AccountOptionsPage({
   params: Promise<{ uuid: string }>;
 }) {
   const { uuid } = await params;
-  const data = await loadAccountOptionsView(uuid);
+  const [data, flags] = await Promise.all([
+    loadAccountOptionsView(uuid),
+    getAccountTabFlags(uuid),
+  ]);
 
   if (data === null) notFound();
 
+  const tabFlags = flags ?? { showOptions: true, showTrades: true };
+
   if (data.kind === "no-data") {
     return (
-      <main className="min-h-screen p-6 max-w-7xl mx-auto">
-        <header className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-5 py-4 mb-4">
-          <div className="text-xl font-bold">{data.account.label}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            No transactions or position snapshots yet for this account.
-          </div>
-        </header>
-      </main>
+      <>
+        <AccountTabs uuid={uuid} flags={tabFlags} active="options" />
+        <main className="min-h-screen p-6 max-w-7xl mx-auto">
+          <header className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-5 py-4 mb-4">
+            <div className="text-xl font-bold">{data.account.label}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              No transactions or position snapshots yet for this account.
+            </div>
+          </header>
+        </main>
+      </>
     );
   }
 
@@ -43,6 +53,8 @@ export default async function AccountOptionsPage({
   const asOfDate = state.navSeries.at(-1)?.date ?? state.config.seedDate;
 
   return (
+    <>
+    <AccountTabs uuid={uuid} flags={tabFlags} active="options" />
     <main className="min-h-screen p-6 max-w-7xl mx-auto">
       <header className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-5 py-4 mb-4 flex items-baseline justify-between">
         <div>
@@ -107,5 +119,6 @@ export default async function AccountOptionsPage({
         </div>
       )}
     </main>
+    </>
   );
 }
