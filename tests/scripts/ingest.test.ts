@@ -11,6 +11,8 @@ import {
 } from "@/lib/db/repos/accounts";
 import { listTransactionsByAccount } from "@/lib/db/repos/transactions";
 import { getEarliestSnapshotDate } from "@/lib/db/repos/positionSnapshots";
+import { setSeed } from "@/lib/db/repos/accounts";
+import { getBoolean, getSetting } from "@/lib/db/repos/settings";
 
 let testDir: string;
 
@@ -91,5 +93,60 @@ describe("ingest — row insertion", () => {
     expect(first.rowsInserted).toBeGreaterThan(0);
     expect(second.rowsInserted).toBe(0);
     expect(second.rowsSkippedDuplicate).toBe(first.rowsInserted);
+  });
+});
+
+describe("ingest — config.json migration", () => {
+  it("migrates seedDate / seedValue / benchmark to the first ingested account", async () => {
+    writeFileSync(
+      path.join(testDir, "config.json"),
+      JSON.stringify({
+        seedDate: "2026-01-15",
+        seedValue: 12345,
+        marketData: { enabled: true },
+        benchmark: "SPY",
+      }),
+    );
+    writeFixture(
+      "transactions/Demo_XXX100_Transactions_20260427-090135.csv",
+      `"Date","Action","Symbol","Description","Quantity","Price","Fees & Comm","Amount"\n"01/05/2026","Buy","ACME","ACME CORP","100","$50.00","$0.00","-$5000.00"\n`,
+    );
+    const db = makeDb();
+    await ingest({ db, dataDir: testDir });
+    const account = getAccountByExternalId(db, "100")!;
+    expect(account.seedDate).toBe("2026-01-15");
+    expect(account.seedValue).toBe(12345);
+    expect(account.benchmark).toBe("SPY");
+    expect(getBoolean(db, "market_data.enabled")).toBe(true);
+    expect(getSetting(db, "_meta.config_json_migrated")).toBe("true");
+  });
+
+  it("only migrates config.json once", async () => {
+    writeFileSync(
+      path.join(testDir, "config.json"),
+      JSON.stringify({ seedDate: "2026-01-15", seedValue: 12345 }),
+    );
+    writeFixture(
+      "transactions/Demo_XXX100_Transactions_20260427-090135.csv",
+      `"Date","Action","Symbol","Description","Quantity","Price","Fees & Comm","Amount"\n"01/05/2026","Buy","ACME","ACME CORP","100","$50.00","$0.00","-$5000.00"\n`,
+    );
+    const db = makeDb();
+    await ingest({ db, dataDir: testDir });
+    setSeed(db, "100", null, null);
+    await ingest({ db, dataDir: testDir });
+    const account = getAccountByExternalId(db, "100")!;
+    expect(account.seedDate).toBeNull();
+    expect(account.seedValue).toBeNull();
+  });
+
+  it("skips migration silently when no config.json exists", async () => {
+    writeFixture(
+      "transactions/Demo_XXX100_Transactions_20260427-090135.csv",
+      `"Date","Action","Symbol","Description","Quantity","Price","Fees & Comm","Amount"\n"01/05/2026","Buy","ACME","ACME CORP","100","$50.00","$0.00","-$5000.00"\n`,
+    );
+    const db = makeDb();
+    const summary = await ingest({ db, dataDir: testDir });
+    expect(summary.warnings.filter((w) => w.includes("config.json"))).toEqual([]);
+    expect(getSetting(db, "_meta.config_json_migrated")).toBeNull();
   });
 });

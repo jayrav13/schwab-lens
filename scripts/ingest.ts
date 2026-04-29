@@ -1,13 +1,16 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type Database from "better-sqlite3";
 import { runMigrations } from "@/lib/db/migrate";
 import {
   upsertAccount,
   getAccountByExternalId,
+  setSeed,
+  setBenchmark,
 } from "@/lib/db/repos/accounts";
 import { insertTransaction } from "@/lib/db/repos/transactions";
 import { insertSnapshot } from "@/lib/db/repos/positionSnapshots";
+import { setSetting, setBoolean } from "@/lib/db/repos/settings";
 import {
   identifyTransactions,
   identifyPositions,
@@ -41,6 +44,8 @@ export async function ingest(opts: IngestOptions): Promise<IngestSummary> {
   };
 
   runMigrations(db, path.join(process.cwd(), "db", "migrations"));
+
+  const pendingConfigMigration = readPendingConfigMigration(db, dataDir);
 
   const txDir = path.join(dataDir, "transactions");
   const posDir = path.join(dataDir, "positions");
@@ -90,7 +95,62 @@ export async function ingest(opts: IngestOptions): Promise<IngestSummary> {
     summary.filesProcessed++;
   }
 
+  if (pendingConfigMigration && summary.accountsTouched.length > 0) {
+    applyPendingConfigMigration(db, summary, pendingConfigMigration);
+  }
+
   return summary;
+}
+
+interface PendingConfigMigration {
+  seedDate: string | null;
+  seedValue: number | null;
+  benchmark: string | null;
+  marketDataEnabled: boolean;
+}
+
+function readPendingConfigMigration(
+  db: Database.Database,
+  dataDir: string,
+): PendingConfigMigration | null {
+  const configPath = path.join(dataDir, "config.json");
+  if (!existsSync(configPath)) return null;
+
+  const alreadyMigrated = db
+    .prepare("SELECT value FROM settings WHERE key = ?")
+    .get("_meta.config_json_migrated") as { value: string } | undefined;
+  if (alreadyMigrated?.value === "true") return null;
+
+  try {
+    const json = JSON.parse(readFileSync(configPath, "utf8"));
+    return {
+      seedDate: typeof json.seedDate === "string" ? json.seedDate : null,
+      seedValue: typeof json.seedValue === "number" ? json.seedValue : null,
+      benchmark: typeof json.benchmark === "string" ? json.benchmark : null,
+      marketDataEnabled: !!json.marketData?.enabled,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function applyPendingConfigMigration(
+  db: Database.Database,
+  summary: IngestSummary,
+  pending: PendingConfigMigration,
+): void {
+  const firstExternalId = summary.accountsTouched[0];
+  if (pending.seedDate || pending.seedValue !== null) {
+    setSeed(db, firstExternalId, pending.seedDate, pending.seedValue);
+  }
+  if (pending.benchmark) {
+    setBenchmark(db, firstExternalId, pending.benchmark);
+  }
+  setBoolean(db, "market_data.enabled", pending.marketDataEnabled);
+  setSetting(db, "_meta.config_json_migrated", "true");
+  summary.warnings.push(
+    `Migrated data/config.json into account ${firstExternalId}. You can now delete data/config.json.`,
+  );
 }
 
 function safeReaddir(dir: string): string[] {
