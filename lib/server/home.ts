@@ -16,3 +16,10 @@ export async function loadHome(opts: LoadHomeOpts = {}): Promise<HomeData> {
   const accounts = listAccounts(db);
   return { accounts, loadedAt: new Date().toISOString() };
 }
+
+export async function loadAccounts(
+  opts: LoadHomeOpts = {},
+): Promise<Account[]> {
+  const db = opts.db ?? getDb();
+  return listAccounts(db);
+}
