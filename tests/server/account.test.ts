@@ -82,6 +82,36 @@ describe("loadAccountOptionsView", () => {
     expect(result.state.cashLedger.length).toBeGreaterThan(0);
   });
 
+  it("includes a markToMarket field that is null when no held positions", async () => {
+    const db = makeDb();
+    setBoolean(db, "market_data.enabled", true);
+    const account = upsertAccount(db, { externalId: "300", label: "Demo3" });
+    setSeed(db, "300", "2026-01-01", 10000);
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-01-01",
+        symbol: "Cash & Cash Investments",
+        description: null,
+        quantity: null,
+        price: null,
+        marketValue: 10000,
+        costBasis: null,
+        assetType: "cash",
+        raw: {},
+      },
+      "snap.csv",
+    );
+    const result = await loadAccountOptionsView(account.uuid, {
+      db,
+      includeMarketData: false,
+    });
+    expect(result?.kind).toBe("ready");
+    if (result?.kind !== "ready") return;
+    expect(result.markToMarket).toBeNull();
+  });
+
   it("falls back to earliest snapshot for seed when no override is set", async () => {
     const db = makeDb();
     setBoolean(db, "market_data.enabled", false);
