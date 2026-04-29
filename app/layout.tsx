@@ -3,8 +3,8 @@ import "./globals.css";
 import { AppNav } from "@/app/components/AppNav";
 
 export const metadata: Metadata = {
-  title: "Demo",
-  description: "Options income tracker",
+  title: "Schwab Lens",
+  description: "Local-first read-only Schwab brokerage dashboards",
 };
 
 export default function RootLayout({
