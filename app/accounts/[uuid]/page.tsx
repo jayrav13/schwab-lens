@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 export default async function AccountIndexPage({
   params,
@@ -6,5 +6,5 @@ export default async function AccountIndexPage({
   params: Promise<{ uuid: string }>;
 }) {
   const { uuid } = await params;
-  redirect(`/accounts/${uuid}/overview`);
+  permanentRedirect(`/accounts/${uuid}/overview`);
 }
