@@ -6,6 +6,7 @@ export type Quote = {
   price: number;
   asOf: string;   // ISO timestamp when quote was fetched
   stale?: boolean; // true if served from cache after a failed live fetch
+  prevClose: number | null;
 };
 
 export type QuoteResult =
@@ -53,7 +54,7 @@ export async function fetchQuotes(
   tickers: string[],
   opts: {
     ttlMs?: number;
-    fetchOne?: (ticker: string) => Promise<{ price: number }>;
+    fetchOne?: (ticker: string) => Promise<{ price: number; prevClose: number | null }>;
   } = {},
 ): Promise<QuoteResult[]> {
   const ttlMs = opts.ttlMs ?? DEFAULT_TTL_MS;
@@ -66,28 +67,31 @@ export async function fetchQuotes(
   for (const ticker of Array.from(new Set(tickers))) {
     const cached = cache.quotes[ticker];
     if (cached && isFresh(cached, ttlMs)) {
-      results.push({ kind: "ok", quote: { ...cached, stale: false } });
+      results.push({
+        kind: "ok",
+        quote: { ...cached, stale: false, prevClose: cached.prevClose ?? null },
+      });
       continue;
     }
 
     try {
-      const { price } = await fetcher(ticker);
+      const { price, prevClose } = await fetcher(ticker);
       const quote: Quote = {
         ticker,
         price,
         asOf: new Date().toISOString(),
         stale: false,
+        prevClose,
       };
-      cache.quotes[ticker] = { ticker, price, asOf: quote.asOf };
+      cache.quotes[ticker] = { ticker, price, asOf: quote.asOf, prevClose };
       cacheDirty = true;
       results.push({ kind: "ok", quote });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (cached) {
-        // Fall back to stale cache
         results.push({
           kind: "ok",
-          quote: { ...cached, stale: true },
+          quote: { ...cached, stale: true, prevClose: cached.prevClose ?? null },
         });
       } else {
         results.push({ kind: "error", ticker, message });
@@ -100,7 +104,10 @@ export async function fetchQuotes(
 }
 
 type YahooLike = {
-  quote: (symbol: string) => Promise<{ regularMarketPrice?: number }>;
+  quote: (symbol: string) => Promise<{
+    regularMarketPrice?: number;
+    regularMarketPreviousClose?: number;
+  }>;
 };
 
 let yahooInstance: YahooLike | null = null;
@@ -115,13 +122,19 @@ async function getYahoo(): Promise<YahooLike> {
   return yahooInstance;
 }
 
-async function defaultYahooFetch(ticker: string): Promise<{ price: number }> {
-  // yahoo-finance2 v3+ requires an instance; handles cookie/crumb dance internally.
+async function defaultYahooFetch(
+  ticker: string,
+): Promise<{ price: number; prevClose: number | null }> {
   const yahoo = await getYahoo();
   const q = await yahoo.quote(ticker);
   const price = q.regularMarketPrice;
   if (typeof price !== "number" || !Number.isFinite(price)) {
     throw new Error(`No price returned for ${ticker}`);
   }
-  return { price };
+  const prevClose =
+    typeof q.regularMarketPreviousClose === "number" &&
+    Number.isFinite(q.regularMarketPreviousClose)
+      ? q.regularMarketPreviousClose
+      : null;
+  return { price, prevClose };
 }

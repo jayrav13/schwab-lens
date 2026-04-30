@@ -19,7 +19,7 @@ describe("fetchQuotes", () => {
     const results = await fetchQuotes(["AAA", "BBB"], {
       fetchOne: async (t) => {
         calls.push(t);
-        return { price: t === "AAA" ? 10 : 20 };
+        return { price: t === "AAA" ? 10 : 20, prevClose: null };
       },
     });
     expect(calls.sort()).toEqual(["AAA", "BBB"]);
@@ -29,7 +29,7 @@ describe("fetchQuotes", () => {
 
   it("uses the cache on the second call within TTL", async () => {
     const first = await fetchQuotes(["AAA"], {
-      fetchOne: async () => ({ price: 10 }),
+      fetchOne: async () => ({ price: 10, prevClose: null }),
     });
     expect(first[0].kind).toBe("ok");
 
@@ -37,7 +37,7 @@ describe("fetchQuotes", () => {
     const second = await fetchQuotes(["AAA"], {
       fetchOne: async () => {
         called = true;
-        return { price: 999 };
+        return { price: 999, prevClose: null };
       },
       ttlMs: 60_000,
     });
@@ -49,7 +49,7 @@ describe("fetchQuotes", () => {
   });
 
   it("returns stale cached quote when the live fetch fails", async () => {
-    await fetchQuotes(["AAA"], { fetchOne: async () => ({ price: 10 }) });
+    await fetchQuotes(["AAA"], { fetchOne: async () => ({ price: 10, prevClose: null }) });
 
     // Force a cache miss by setting TTL to 0 so the cached entry is "expired"
     const results = await fetchQuotes(["AAA"], {
@@ -75,10 +75,22 @@ describe("fetchQuotes", () => {
   });
 
   it("persists the cache to .cache/quotes.json", async () => {
-    await fetchQuotes(["AAA"], { fetchOne: async () => ({ price: 42 }) });
+    await fetchQuotes(["AAA"], { fetchOne: async () => ({ price: 42, prevClose: 41 }) });
     const cacheFile = path.join(cacheDir, "quotes.json");
     expect(existsSync(cacheFile)).toBe(true);
     const parsed = JSON.parse(readFileSync(cacheFile, "utf8"));
     expect(parsed.quotes.AAA.price).toBe(42);
+    expect(parsed.quotes.AAA.prevClose).toBe(41);
+  });
+
+  it("returns prevClose on a fresh fetch", async () => {
+    const results = await fetchQuotes(["AAA"], {
+      fetchOne: async () => ({ price: 50, prevClose: 48 }),
+    });
+    if (results[0].kind === "ok") {
+      expect(results[0].quote.prevClose).toBe(48);
+    } else {
+      throw new Error("expected ok");
+    }
   });
 });
