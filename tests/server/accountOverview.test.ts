@@ -169,6 +169,7 @@ describe("loadAccountOverviewView", () => {
     expect(result.transactions).toHaveLength(4);
     expect(result.nav.computation.seedDate).toBe("");
     expect(result.nav.computation.seedValue).toBe(0);
+    expect(result.warnings.some((w) => w.kind === "MissingSeed")).toBe(true);
   });
 
   it("clamps period start to seed when period predates seed", async () => {

@@ -140,6 +140,10 @@ export async function loadAccountOverviewView(
 
   const state = buildPortfolio(transactions, config, seed);
 
+  if (config.seedValue === 0 && config.seedDate === "") {
+    state.warnings.push({ kind: "MissingSeed" });
+  }
+
   const today = opts.today ?? yesterdayInET();
   const period = resolvePeriod(opts.period, today, seed.asOf);
 

@@ -10,8 +10,9 @@ export function SummaryStrip({ state, markToMarket }: Props) {
     (a, e) => a + e.signedAmount,
     0,
   );
+  const hasHonestSeed = state.config.seedValue > 0 && state.config.seedDate !== "";
   const gain = nav - state.config.seedValue - cumulativeExternal;
-  const returnPct = gain / state.config.seedValue;
+  const returnPct = hasHonestSeed ? gain / state.config.seedValue : 0;
   const finalCash =
     state.cashLedger.at(-1)?.balance ?? state.config.seedValue;
   const sharesAtCost = state.openSharePositions.reduce(
@@ -27,14 +28,22 @@ export function SummaryStrip({ state, markToMarket }: Props) {
         <Card
           label="Options Income NAV"
           value={formatCurrency(nav)}
-          delta={`${gain >= 0 ? "+" : "−"}${formatCurrency(Math.abs(gain))} since seed`}
-          deltaClass={deltaColor}
+          delta={
+            hasHonestSeed
+              ? `${gain >= 0 ? "+" : "−"}${formatCurrency(Math.abs(gain))} since seed`
+              : `as of ${state.navSeries.at(-1)?.date ?? "—"}`
+          }
+          deltaClass={hasHonestSeed ? deltaColor : undefined}
         />
         <Card
           label="Return since seed"
-          value={`${(returnPct * 100).toFixed(2)}%`}
-          valueClass={pctColor}
-          delta={`external flows ${formatCurrency(cumulativeExternal)}`}
+          value={hasHonestSeed ? `${(returnPct * 100).toFixed(2)}%` : "—"}
+          valueClass={hasHonestSeed ? pctColor : "text-gray-400 dark:text-gray-500"}
+          delta={
+            hasHonestSeed
+              ? `external flows ${formatCurrency(cumulativeExternal)}`
+              : "no seed configured"
+          }
         />
         <Card
           label="Cash"

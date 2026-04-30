@@ -101,6 +101,10 @@ export async function loadAccountOptionsView(
 
   const state = buildPortfolio(transactions, config, seed);
 
+  if (config.seedValue === 0 && config.seedDate === "") {
+    state.warnings.push({ kind: "MissingSeed" });
+  }
+
   let markToMarket: MarkToMarket | null = null;
   const includeMarket = (opts.includeMarketData ?? true) && marketDataEnabled;
 
