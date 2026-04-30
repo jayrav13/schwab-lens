@@ -153,7 +153,11 @@ export async function loadAccountOverviewView(
     await enrichWithMarketData(state, seed, today);
   }
 
-  const nav = buildNavStrip(state, latestSnapshot?.totalValue ?? null, period);
+  const liveNav =
+    latestSnapshotRows.length > 0
+      ? computeLiveNavFromSnapshot(latestSnapshotRows)
+      : null;
+  const nav = buildNavStrip(state, liveNav, period);
 
   const quoteMap: Record<string, Quote | null> = {};
   if (includeMarket) {
@@ -250,7 +254,7 @@ async function enrichWithMarketData(
 
 function buildNavStrip(
   state: PortfolioState,
-  latestSnapshotTotalValue: number | null,
+  liveNav: number | null,
   period: ResolvedPeriod,
 ): NavStripData {
   const series =
@@ -258,8 +262,11 @@ function buildNavStrip(
       ? state.portfolioValueSeries
       : state.navSeries;
 
+  // Mark-to-market live NAV from the latest snapshot wins when present —
+  // it reflects what the account is actually worth today (stocks + cash).
+  // Options market value is intentionally excluded for now.
   const current =
-    series.at(-1)?.nav ?? latestSnapshotTotalValue ?? state.config.seedValue;
+    liveNav ?? series.at(-1)?.nav ?? state.config.seedValue;
 
   const startPoint = closestOnOrBefore(series, period.start);
   const start = startPoint?.nav ?? state.config.seedValue;
@@ -315,6 +322,16 @@ function isCashRow(row: PositionSnapshotRow): boolean {
 function isOptionLike(assetType: string | null): boolean {
   const lowered = (assetType ?? "").toLowerCase();
   return lowered === "option" || lowered === "options";
+}
+
+function computeLiveNavFromSnapshot(rows: PositionSnapshotRow[]): number {
+  let total = 0;
+  for (const r of rows) {
+    if (isCashRow(r) || isEquityLike(r.asset_type)) {
+      total += r.market_value ?? 0;
+    }
+  }
+  return total;
 }
 
 function buildHoldings(

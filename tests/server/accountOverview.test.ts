@@ -102,7 +102,9 @@ describe("loadAccountOverviewView", () => {
     if (result?.kind !== "ready") return;
 
     expect(result.account.uuid).toBe(account.uuid);
-    expect(result.nav.current).toBeGreaterThan(0);
+    // nav.current should equal mark-to-market (equity + cash) from the latest
+    // snapshot, not the cost-basis ledger value.
+    expect(result.nav.current).toBe(11000);
     expect(result.holdings.find((h) => h.symbol === "ACME")?.value).toBe(6000);
     expect(result.transactions).toHaveLength(1);
     expect(result.allocation.bar.length).toBeGreaterThan(0);
@@ -170,6 +172,72 @@ describe("loadAccountOverviewView", () => {
     expect(result.nav.computation.seedDate).toBe("");
     expect(result.nav.computation.seedValue).toBe(0);
     expect(result.warnings.some((w) => w.kind === "MissingSeed")).toBe(true);
+  });
+
+  it("uses live snapshot mark-to-market for current NAV, ignoring options", async () => {
+    const db = makeDb();
+    setBoolean(db, "market_data.enabled", false);
+    const account = upsertAccount(db, { externalId: "300", label: "Demo3" });
+    setSeed(db, "300", "2026-01-01", 10000);
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-04-25",
+        symbol: "ACME",
+        description: "ACME",
+        quantity: 100,
+        price: 75,
+        marketValue: 7500,
+        costBasis: 5000,
+        assetType: "equity",
+        raw: {},
+      },
+      "snap.csv",
+    );
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-04-25",
+        symbol: "Cash & Cash Investments",
+        description: null,
+        quantity: null,
+        price: null,
+        marketValue: 2000,
+        costBasis: null,
+        assetType: "cash",
+        raw: {},
+      },
+      "snap.csv",
+    );
+    // An option row that should be excluded from the live NAV (for now).
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-04-25",
+        symbol: "ACME 2026-05-01 50P",
+        description: null,
+        quantity: -1,
+        price: 1.5,
+        marketValue: -150,
+        costBasis: null,
+        assetType: "option",
+        raw: {},
+      },
+      "snap.csv",
+    );
+
+    const result = await loadAccountOverviewView(account.uuid, {
+      db,
+      period: "YTD",
+      today: "2026-04-29",
+      includeMarketData: false,
+    });
+    if (result?.kind !== "ready") throw new Error("expected ready");
+    // 7500 (equity) + 2000 (cash). Option row's -150 is excluded.
+    expect(result.nav.current).toBe(9500);
   });
 
   it("clamps period start to seed when period predates seed", async () => {
