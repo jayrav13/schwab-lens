@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "ingest": "tsx scripts/ingest-cli.ts",
+    "account:configure": "tsx scripts/account-configure.ts",
     "db:reset": "rm -f data/portfolio.db"
   },
   "dependencies": {
