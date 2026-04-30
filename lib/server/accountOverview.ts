@@ -141,7 +141,7 @@ export async function loadAccountOverviewView(
 
   const nav = buildNavStrip(state, latestSnapshot?.totalValue ?? null, period);
 
-  let quoteMap: Record<string, Quote | null> = {};
+  const quoteMap: Record<string, Quote | null> = {};
   if (includeMarket) {
     const snapSymbols = new Set(latestSnapshotRows.map((r) => r.symbol));
     const missing = state.openSharePositions
