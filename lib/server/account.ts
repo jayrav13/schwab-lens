@@ -77,9 +77,9 @@ export async function loadAccountOptionsView(
   }
 
   const marketDataEnabled = getBoolean(db, "market_data.enabled");
-  const config: Config = {
-    seedDate: account.seedDate ?? earliestSnapshot?.asOf ?? "",
-    seedValue: account.seedValue ?? earliestSnapshot?.totalValue ?? 0,
+  const bootstrap: Config = {
+    seedDate: account.seedDate ?? "",
+    seedValue: account.seedValue ?? 0,
     marketData: { enabled: marketDataEnabled },
     benchmark: account.benchmark,
   };
@@ -87,8 +87,17 @@ export async function loadAccountOptionsView(
   const seed = chooseSeed({
     transactions,
     earliestSnapshot,
-    config,
+    config: bootstrap,
   });
+
+  const config: Config =
+    earliestSnapshot !== null && seed.asOf === earliestSnapshot.asOf.slice(0, 10)
+      ? {
+          ...bootstrap,
+          seedDate: earliestSnapshot.asOf.slice(0, 10),
+          seedValue: account.seedValue ?? earliestSnapshot.totalValue,
+        }
+      : bootstrap;
 
   const state = buildPortfolio(transactions, config, seed);
 
