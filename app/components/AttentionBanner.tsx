@@ -12,6 +12,8 @@ function describe(w: Warning): string {
       return `Assignment on ${w.date} (${w.contractKey}) has no matching Buy/Sell share row.`;
     case "MissingHistoricalPrices":
       return `Historical closes unavailable for ${w.ticker} — Portfolio Value excludes this ticker's contribution on missing dates. (${w.reason})`;
+    case "MissingSeed":
+      return `No starting NAV configured — period and "since seed" returns are unavailable. Run \`npm run account:configure\` to set a seed date and value.`;
   }
 }
 

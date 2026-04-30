@@ -161,6 +161,7 @@ describe("loadAccountOptionsView", () => {
     expect(result.state.transactions).toHaveLength(4);
     expect(result.state.config.seedDate).toBe("");
     expect(result.state.config.seedValue).toBe(0);
+    expect(result.state.warnings.some((w) => w.kind === "MissingSeed")).toBe(true);
   });
 
   it("falls back to earliest snapshot for seed when no override is set", async () => {

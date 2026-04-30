@@ -31,7 +31,8 @@ export type Warning =
   | { kind: "CashDrift"; expected: number; actual: number }
   | { kind: "NegativeShareEndOfDay"; ticker: string; date: string; shares: number }
   | { kind: "UnpairedAssignment"; date: string; contractKey: string }
-  | { kind: "MissingHistoricalPrices"; ticker: string; reason: string };
+  | { kind: "MissingHistoricalPrices"; ticker: string; reason: string }
+  | { kind: "MissingSeed" };
 
 export type PortfolioState = {
   config: Config;

@@ -9,6 +9,8 @@ function formatPct(n: number): string {
 
 export function ReturnMetricsCard({ state }: Props) {
   const r = computeReturnMetrics(state.navSeries, state.externalFlows, state.config);
+  const hasHonestSeed = state.config.seedValue > 0 && state.config.seedDate !== "";
+  const muted = "text-gray-400 dark:text-gray-500";
   const color = (n: number) =>
     n >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400";
 
@@ -22,23 +24,33 @@ export function ReturnMetricsCard({ state }: Props) {
         subtracted from performance.
       </p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Tile label="Total return" value={formatPct(r.totalReturnPct)} valueClass={color(r.totalReturnPct)} sub={`${r.daysSinceSeed} days`} />
-        <Tile label="Annualized" value={formatPct(r.annualizedPct)} valueClass={color(r.annualizedPct)} sub="(365-day basis)" />
+        <Tile
+          label="Total return"
+          value={hasHonestSeed ? formatPct(r.totalReturnPct) : "—"}
+          valueClass={hasHonestSeed ? color(r.totalReturnPct) : muted}
+          sub={hasHonestSeed ? `${r.daysSinceSeed} days` : "no seed configured"}
+        />
+        <Tile
+          label="Annualized"
+          value={hasHonestSeed ? formatPct(r.annualizedPct) : "—"}
+          valueClass={hasHonestSeed ? color(r.annualizedPct) : muted}
+          sub={hasHonestSeed ? "(365-day basis)" : "no seed configured"}
+        />
         <Tile
           label="Best month"
-          value={r.bestMonth ? formatPct(r.bestMonth.returnPct) : "—"}
-          valueClass={r.bestMonth ? color(r.bestMonth.returnPct) : ""}
-          sub={r.bestMonth?.month ?? ""}
+          value={hasHonestSeed && r.bestMonth ? formatPct(r.bestMonth.returnPct) : "—"}
+          valueClass={hasHonestSeed && r.bestMonth ? color(r.bestMonth.returnPct) : muted}
+          sub={hasHonestSeed ? (r.bestMonth?.month ?? "") : ""}
         />
         <Tile
           label="Worst month"
-          value={r.worstMonth ? formatPct(r.worstMonth.returnPct) : "—"}
-          valueClass={r.worstMonth ? color(r.worstMonth.returnPct) : ""}
-          sub={r.worstMonth?.month ?? ""}
+          value={hasHonestSeed && r.worstMonth ? formatPct(r.worstMonth.returnPct) : "—"}
+          valueClass={hasHonestSeed && r.worstMonth ? color(r.worstMonth.returnPct) : muted}
+          sub={hasHonestSeed ? (r.worstMonth?.month ?? "") : ""}
         />
       </div>
 
-      {r.monthly.length > 0 && (
+      {hasHonestSeed && r.monthly.length > 0 && (
         <div className="mt-4">
           <div className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1">
             Monthly

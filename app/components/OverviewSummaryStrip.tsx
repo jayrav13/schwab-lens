@@ -12,6 +12,7 @@ export function OverviewSummaryStrip({ nav, cash, holdingsCount }: Props) {
   const positive = changeAmount >= 0;
   const periodLabel = computation.period;
   const sign = positive ? "+" : "−";
+  const hasHonestSeed = computation.seedValue > 0 && computation.seedDate !== "";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -22,10 +23,14 @@ export function OverviewSummaryStrip({ nav, cash, holdingsCount }: Props) {
       />
       <Card
         label={`Return · ${periodLabel}`}
-        value={`${positive ? "+" : ""}${(changePct * 100).toFixed(2)}%`}
-        valueClass={positive ? "text-emerald-600" : "text-red-600"}
-        delta={`${sign}${formatCurrency(Math.abs(changeAmount))} since ${computation.effectiveStart}`}
-        deltaClass={positive ? "text-emerald-600" : "text-red-600"}
+        value={hasHonestSeed ? `${positive ? "+" : ""}${(changePct * 100).toFixed(2)}%` : "—"}
+        valueClass={hasHonestSeed ? (positive ? "text-emerald-600" : "text-red-600") : "text-gray-400 dark:text-gray-500"}
+        delta={
+          hasHonestSeed
+            ? `${sign}${formatCurrency(Math.abs(changeAmount))} since ${computation.effectiveStart}`
+            : "no seed configured"
+        }
+        deltaClass={hasHonestSeed ? (positive ? "text-emerald-600" : "text-red-600") : undefined}
       />
       <Card
         label="Cash"
