@@ -5,7 +5,6 @@ import { runMigrations } from "@/lib/db/migrate";
 import { upsertAccount, setSeed } from "@/lib/db/repos/accounts";
 import { insertTransaction } from "@/lib/db/repos/transactions";
 import { insertSnapshot } from "@/lib/db/repos/positionSnapshots";
-import { setBoolean } from "@/lib/db/repos/settings";
 import { loadAccountOverviewView } from "@/lib/server/accountOverview";
 
 function makeDb() {
@@ -38,7 +37,6 @@ describe("loadAccountOverviewView", () => {
 
   it("returns ready with NAV, holdings, recent transactions, allocation", async () => {
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", false);
     const account = upsertAccount(db, { externalId: "100", label: "Demo" });
     setSeed(db, "100", "2026-01-01", 10000);
     insertTransaction(
@@ -123,7 +121,6 @@ describe("loadAccountOverviewView", () => {
   it("keeps all transactions when snapshot post-dates them and no override is set", async () => {
     // Regression for issue #23.
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", false);
     const account = upsertAccount(db, { externalId: "999", label: "DemoBug" });
     for (const date of ["2026-01-05", "2026-02-10", "2026-03-15", "2026-04-20"]) {
       insertTransaction(
@@ -176,7 +173,6 @@ describe("loadAccountOverviewView", () => {
 
   it("uses live snapshot mark-to-market for current NAV, ignoring options", async () => {
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", false);
     const account = upsertAccount(db, { externalId: "300", label: "Demo3" });
     setSeed(db, "300", "2026-01-01", 10000);
     insertSnapshot(
@@ -242,7 +238,6 @@ describe("loadAccountOverviewView", () => {
 
   it("clamps period start to seed when period predates seed", async () => {
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", false);
     const account = upsertAccount(db, { externalId: "200", label: "Demo2" });
     setSeed(db, "200", "2026-03-01", 10000);
     insertSnapshot(

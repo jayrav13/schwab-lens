@@ -5,7 +5,6 @@ import { runMigrations } from "@/lib/db/migrate";
 import { upsertAccount, setSeed } from "@/lib/db/repos/accounts";
 import { insertTransaction } from "@/lib/db/repos/transactions";
 import { insertSnapshot } from "@/lib/db/repos/positionSnapshots";
-import { setBoolean } from "@/lib/db/repos/settings";
 import { loadAccountOptionsView } from "@/lib/server/account";
 
 function makeDb() {
@@ -34,7 +33,6 @@ describe("loadAccountOptionsView", () => {
 
   it("builds a PortfolioState when transactions exist", async () => {
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", false);
     const account = upsertAccount(db, { externalId: "100", label: "Demo" });
     setSeed(db, "100", "2026-01-01", 10000);
 
@@ -84,7 +82,6 @@ describe("loadAccountOptionsView", () => {
 
   it("includes a markToMarket field that is null when no held positions", async () => {
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", true);
     const account = upsertAccount(db, { externalId: "300", label: "Demo3" });
     setSeed(db, "300", "2026-01-01", 10000);
     insertSnapshot(
@@ -118,7 +115,6 @@ describe("loadAccountOptionsView", () => {
     // before that date — even though chooseSeed correctly rejected the
     // snapshot as a seed.
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", false);
     const account = upsertAccount(db, { externalId: "999", label: "DemoBug" });
     for (const date of ["2026-01-05", "2026-02-10", "2026-03-15", "2026-04-20"]) {
       insertTransaction(
@@ -166,7 +162,6 @@ describe("loadAccountOptionsView", () => {
 
   it("falls back to earliest snapshot for seed when no override is set", async () => {
     const db = makeDb();
-    setBoolean(db, "market_data.enabled", false);
     const account = upsertAccount(db, { externalId: "200", label: "Demo2" });
     insertSnapshot(
       db,
