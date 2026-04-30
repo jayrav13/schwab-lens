@@ -104,8 +104,11 @@ describe("loadAccountOverviewView", () => {
     expect(result.account.uuid).toBe(account.uuid);
     expect(result.nav.current).toBeGreaterThan(0);
     expect(result.holdings.find((h) => h.symbol === "ACME")?.value).toBe(6000);
-    expect(result.recentTransactions).toHaveLength(1);
+    expect(result.transactions).toHaveLength(1);
     expect(result.allocation.bar.length).toBeGreaterThan(0);
+    expect(result.sourceFiles.transactions).toContain("demo.csv");
+    expect(result.sourceFiles.positions).toContain("snap.csv");
+    expect(result.dataThroughDate).toBe("2026-04-25");
 
     const totalPct = result.allocation.bar.reduce((a, s) => a + s.pct, 0);
     expect(totalPct).toBeCloseTo(1, 2);

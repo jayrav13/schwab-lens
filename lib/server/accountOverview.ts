@@ -72,8 +72,10 @@ export type AccountOverviewView =
       account: Account;
       nav: NavStripData;
       holdings: HoldingRow[];
-      recentTransactions: Transaction[];
+      transactions: Transaction[];
       allocation: { bar: AllocationSlice[]; equityRows: EquityAllocationRow[] };
+      sourceFiles: { transactions: string[]; positions: string[] };
+      dataThroughDate: string;
       warnings: Warning[];
       loadedAt: string;
     }
@@ -160,16 +162,26 @@ export async function loadAccountOverviewView(
     quoteMap,
     nav.current,
   );
-  const recentTransactions = state.transactions.slice(-10).reverse();
   const allocation = buildAllocation(latestSnapshotRows, state, quoteMap);
+
+  const txSourceFiles = Array.from(
+    new Set(txRows.map((r) => r.source_file)),
+  ).sort();
+  const posSourceFiles = Array.from(
+    new Set(latestSnapshotRows.map((r) => r.source_file)),
+  ).sort();
+
+  const dataThroughDate = latestSnapDate ?? today;
 
   return {
     kind: "ready",
     account,
     nav,
     holdings,
-    recentTransactions,
+    transactions: state.transactions,
     allocation,
+    sourceFiles: { transactions: txSourceFiles, positions: posSourceFiles },
+    dataThroughDate,
     warnings: state.warnings,
     loadedAt: new Date().toISOString(),
   };

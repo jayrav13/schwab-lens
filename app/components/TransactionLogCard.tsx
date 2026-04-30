@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Transaction } from "@/lib/csv/types";
 import { formatCurrency } from "@/lib/util/money";
 
-type Props = { transactions: Transaction[] };
+type Props = { transactions: Transaction[]; viewAllHref?: string };
 
 const PREVIEW_COUNT = 10;
 
@@ -43,7 +43,7 @@ function describe(t: Transaction): string {
   return t.raw.Description ?? t.rawAction;
 }
 
-export function TransactionLogCard({ transactions }: Props) {
+export function TransactionLogCard({ transactions, viewAllHref = "/transactions" }: Props) {
   const sorted = [...transactions].sort((a, b) =>
     a.tradeDate < b.tradeDate ? 1 : a.tradeDate > b.tradeDate ? -1 : 0,
   );
@@ -57,7 +57,7 @@ export function TransactionLogCard({ transactions }: Props) {
         </h3>
         {sorted.length > 0 && (
           <Link
-            href="/transactions"
+            href={viewAllHref}
             className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >
             View all {sorted.length} →
