@@ -10,7 +10,6 @@ import {
   getLatestSnapshotDate,
   getSnapshotByDate,
 } from "@/lib/db/repos/positionSnapshots";
-import { getBoolean } from "@/lib/db/repos/settings";
 import { fetchQuotes, type Quote } from "@/lib/market/quotes";
 import { loadHistoricalCloses } from "@/lib/market/historical";
 import {
@@ -76,11 +75,10 @@ export async function loadAccountOptionsView(
     return { kind: "no-data", account };
   }
 
-  const marketDataEnabled = getBoolean(db, "market_data.enabled");
   const bootstrap: Config = {
     seedDate: account.seedDate ?? "",
     seedValue: account.seedValue ?? 0,
-    marketData: { enabled: marketDataEnabled },
+    marketData: { enabled: true },
     benchmark: account.benchmark,
   };
 
@@ -106,7 +104,7 @@ export async function loadAccountOptionsView(
   }
 
   let markToMarket: MarkToMarket | null = null;
-  const includeMarket = (opts.includeMarketData ?? true) && marketDataEnabled;
+  const includeMarket = opts.includeMarketData ?? true;
 
   if (includeMarket) {
     const heldTickers = collectHeldTickers(state, seed);

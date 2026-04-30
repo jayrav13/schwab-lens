@@ -10,7 +10,7 @@ import {
 } from "@/lib/db/repos/accounts";
 import { insertTransaction } from "@/lib/db/repos/transactions";
 import { insertSnapshot } from "@/lib/db/repos/positionSnapshots";
-import { setSetting, setBoolean } from "@/lib/db/repos/settings";
+import { setSetting } from "@/lib/db/repos/settings";
 import {
   identifyTransactions,
   identifyPositions,
@@ -106,7 +106,6 @@ interface PendingConfigMigration {
   seedDate: string | null;
   seedValue: number | null;
   benchmark: string | null;
-  marketDataEnabled: boolean;
 }
 
 function readPendingConfigMigration(
@@ -127,7 +126,6 @@ function readPendingConfigMigration(
       seedDate: typeof json.seedDate === "string" ? json.seedDate : null,
       seedValue: typeof json.seedValue === "number" ? json.seedValue : null,
       benchmark: typeof json.benchmark === "string" ? json.benchmark : null,
-      marketDataEnabled: !!json.marketData?.enabled,
     };
   } catch {
     return null;
@@ -146,7 +144,6 @@ function applyPendingConfigMigration(
   if (pending.benchmark) {
     setBenchmark(db, firstExternalId, pending.benchmark);
   }
-  setBoolean(db, "market_data.enabled", pending.marketDataEnabled);
   setSetting(db, "_meta.config_json_migrated", "true");
   summary.warnings.push(
     `Migrated data/config.json into account ${firstExternalId}. You can now delete data/config.json.`,

@@ -12,7 +12,7 @@ import {
 import { listTransactionsByAccount } from "@/lib/db/repos/transactions";
 import { getEarliestSnapshotDate } from "@/lib/db/repos/positionSnapshots";
 import { setSeed } from "@/lib/db/repos/accounts";
-import { getBoolean, getSetting } from "@/lib/db/repos/settings";
+import { getSetting } from "@/lib/db/repos/settings";
 
 let testDir: string;
 
@@ -117,7 +117,6 @@ describe("ingest — config.json migration", () => {
     expect(account.seedDate).toBe("2026-01-15");
     expect(account.seedValue).toBe(12345);
     expect(account.benchmark).toBe("SPY");
-    expect(getBoolean(db, "market_data.enabled")).toBe(true);
     expect(getSetting(db, "_meta.config_json_migrated")).toBe("true");
   });
 
