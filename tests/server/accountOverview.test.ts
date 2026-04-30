@@ -118,6 +118,59 @@ describe("loadAccountOverviewView", () => {
     ).toBeTruthy();
   });
 
+  it("keeps all transactions when snapshot post-dates them and no override is set", async () => {
+    // Regression for issue #23.
+    const db = makeDb();
+    setBoolean(db, "market_data.enabled", false);
+    const account = upsertAccount(db, { externalId: "999", label: "DemoBug" });
+    for (const date of ["2026-01-05", "2026-02-10", "2026-03-15", "2026-04-20"]) {
+      insertTransaction(
+        db,
+        account.id,
+        {
+          tradeDate: date,
+          actionCanonical: "BUY",
+          actionRaw: "Buy",
+          symbol: "ACME",
+          description: "ACME CORP",
+          quantity: 1,
+          price: 50,
+          fees: 0,
+          amount: -50,
+          raw: { Action: "Buy" },
+        },
+        "demo.csv",
+      );
+    }
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-04-28",
+        symbol: "ACME",
+        description: "ACME CORP",
+        quantity: 4,
+        price: 60,
+        marketValue: 240,
+        costBasis: 200,
+        assetType: "equity",
+        raw: {},
+      },
+      "snap.csv",
+    );
+
+    const result = await loadAccountOverviewView(account.uuid, {
+      db,
+      period: "YTD",
+      today: "2026-04-29",
+      includeMarketData: false,
+    });
+    if (result?.kind !== "ready") throw new Error("expected ready");
+    expect(result.transactions).toHaveLength(4);
+    expect(result.nav.computation.seedDate).toBe("");
+    expect(result.nav.computation.seedValue).toBe(0);
+  });
+
   it("clamps period start to seed when period predates seed", async () => {
     const db = makeDb();
     setBoolean(db, "market_data.enabled", false);
