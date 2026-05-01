@@ -38,9 +38,16 @@ function formatContract(c: ClosedTrade["contract"]): string {
   return `${c.ticker} $${c.strike.toFixed(2)} ${c.type[0]}`;
 }
 
-export function TradesPageClient({ trades }: { trades: ClosedTrade[] }) {
+export function TradesPageClient({
+  trades,
+  uuid,
+}: {
+  trades: ClosedTrade[];
+  uuid: string;
+}) {
   const router = useRouter();
   const sp = useSearchParams();
+  const basePath = `/accounts/${uuid}/trades`;
 
   const { filter, sort } = useMemo(
     () => parseTradesQuery(new URLSearchParams(sp.toString())),
@@ -50,9 +57,9 @@ export function TradesPageClient({ trades }: { trades: ClosedTrade[] }) {
   const updateQuery = useCallback(
     (nextFilter: TradesFilter, nextSort: TradesSort) => {
       const qs = serializeTradesQuery(nextFilter, nextSort).toString();
-      router.replace(qs ? `/trades?${qs}` : "/trades");
+      router.replace(qs ? `${basePath}?${qs}` : basePath);
     },
-    [router],
+    [router, basePath],
   );
 
   const allTickers = useMemo(
