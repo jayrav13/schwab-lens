@@ -72,7 +72,11 @@ export type AccountOverviewView =
       nav: NavStripData;
       holdings: HoldingRow[];
       transactions: Transaction[];
-      allocation: { bar: AllocationSlice[]; equityRows: EquityAllocationRow[] };
+      allocation: {
+        bar: AllocationSlice[];
+        offsets: AllocationSlice[];
+        equityRows: EquityAllocationRow[];
+      };
       sourceFiles: { transactions: string[]; positions: string[] };
       dataThroughDate: string;
       warnings: Warning[];
@@ -388,7 +392,11 @@ function buildAllocation(
   snapshotRows: PositionSnapshotRow[],
   state: PortfolioState,
   quoteMap: Record<string, Quote | null>,
-): { bar: AllocationSlice[]; equityRows: EquityAllocationRow[] } {
+): {
+  bar: AllocationSlice[];
+  offsets: AllocationSlice[];
+  equityRows: EquityAllocationRow[];
+} {
   const bucketTotals: Record<string, number> = {
     EQUITY: 0,
     OPTION: 0,
@@ -428,15 +436,15 @@ function buildAllocation(
     bucketTotals.EQUITY + bucketTotals.OPTION + bucketTotals.CASH + bucketTotals.OTHER;
   const denom = total > 0 ? total : 1;
 
-  const bar: AllocationSlice[] = (
+  const slices: AllocationSlice[] = (
     ["EQUITY", "OPTION", "CASH", "OTHER"] as const
-  )
-    .map((bucket) => ({
-      bucket,
-      value: bucketTotals[bucket],
-      pct: bucketTotals[bucket] / denom,
-    }))
-    .filter((s) => s.value > 0);
+  ).map((bucket) => ({
+    bucket,
+    value: bucketTotals[bucket],
+    pct: bucketTotals[bucket] / denom,
+  }));
+  const bar: AllocationSlice[] = slices.filter((s) => s.value > 0);
+  const offsets: AllocationSlice[] = slices.filter((s) => s.value < 0);
 
   const equityTotal = bucketTotals.EQUITY;
   const equityRows: EquityAllocationRow[] = Object.entries(equityBySymbol)
@@ -456,7 +464,7 @@ function buildAllocation(
       value: tailValue,
       pctOfEquity: equityTotal === 0 ? 0 : tailValue / equityTotal,
     });
-    return { bar, equityRows: top };
+    return { bar, offsets, equityRows: top };
   }
-  return { bar, equityRows };
+  return { bar, offsets, equityRows };
 }

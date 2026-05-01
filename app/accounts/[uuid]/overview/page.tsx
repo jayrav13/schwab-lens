@@ -98,6 +98,7 @@ export default async function AccountOverviewPage({
 
         <AllocationBar
           bar={data.allocation.bar}
+          offsets={data.allocation.offsets}
           equityRows={data.allocation.equityRows}
         />
       </main>

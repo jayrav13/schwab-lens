@@ -234,6 +234,25 @@ describe("loadAccountOverviewView", () => {
     if (result?.kind !== "ready") throw new Error("expected ready");
     // 7500 (equity) + 2000 (cash) + (-150) (short option) = 9350.
     expect(result.nav.current).toBe(9350);
+
+    // The negative OPTION bucket must surface as an offset (never in the
+    // bar), so the geometry stays clean while the chip row makes the
+    // -1.6% short-option contribution visible.
+    const barBuckets = result.allocation.bar.map((s) => s.bucket);
+    expect(barBuckets).toEqual(expect.arrayContaining(["EQUITY", "CASH"]));
+    expect(barBuckets).not.toContain("OPTION");
+
+    const optionOffset = result.allocation.offsets.find(
+      (s) => s.bucket === "OPTION",
+    );
+    expect(optionOffset).toBeDefined();
+    expect(optionOffset?.value).toBe(-150);
+    expect(optionOffset?.pct).toBeCloseTo(-150 / 9350, 5);
+
+    const totalPct =
+      result.allocation.bar.reduce((a, s) => a + s.pct, 0) +
+      result.allocation.offsets.reduce((a, s) => a + s.pct, 0);
+    expect(totalPct).toBeCloseTo(1, 5);
   });
 
   it("clamps period start to seed when period predates seed", async () => {

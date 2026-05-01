@@ -24,9 +24,11 @@ function fmtPct(n: number): string {
 
 export function AllocationBar({
   bar,
+  offsets,
   equityRows,
 }: {
   bar: AllocationSlice[];
+  offsets: AllocationSlice[];
   equityRows: EquityAllocationRow[];
 }) {
   return (
@@ -60,6 +62,18 @@ export function AllocationBar({
               <span key={s.bucket} className="inline-flex items-center gap-1">
                 <span
                   className={`inline-block w-2 h-2 rounded ${BUCKET_COLOR[s.bucket] ?? "bg-gray-400"}`}
+                />
+                {s.bucket} · {fmtPct(s.pct)} · {fmtMoney(s.value)}
+              </span>
+            ))}
+            {offsets.map((s) => (
+              <span
+                key={s.bucket}
+                className="inline-flex items-center gap-1"
+                title="Net negative market value (e.g. short options) — offsets the bar above."
+              >
+                <span
+                  className={`inline-block w-2 h-2 rounded ${BUCKET_COLOR[s.bucket] ?? "bg-gray-400"} opacity-50`}
                 />
                 {s.bucket} · {fmtPct(s.pct)} · {fmtMoney(s.value)}
               </span>
