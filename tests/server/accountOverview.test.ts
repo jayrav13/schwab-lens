@@ -171,7 +171,7 @@ describe("loadAccountOverviewView", () => {
     expect(result.warnings.some((w) => w.kind === "MissingSeed")).toBe(true);
   });
 
-  it("uses live snapshot mark-to-market for current NAV, ignoring options", async () => {
+  it("uses live snapshot mark-to-market for current NAV, including options", async () => {
     const db = makeDb();
     const account = upsertAccount(db, { externalId: "300", label: "Demo3" });
     setSeed(db, "300", "2026-01-01", 10000);
@@ -207,7 +207,7 @@ describe("loadAccountOverviewView", () => {
       },
       "snap.csv",
     );
-    // An option row that should be excluded from the live NAV (for now).
+    // Short option with negative market value — included in live NAV.
     insertSnapshot(
       db,
       account.id,
@@ -232,8 +232,8 @@ describe("loadAccountOverviewView", () => {
       includeMarketData: false,
     });
     if (result?.kind !== "ready") throw new Error("expected ready");
-    // 7500 (equity) + 2000 (cash). Option row's -150 is excluded.
-    expect(result.nav.current).toBe(9500);
+    // 7500 (equity) + 2000 (cash) + (-150) (short option) = 9350.
+    expect(result.nav.current).toBe(9350);
   });
 
   it("clamps period start to seed when period predates seed", async () => {

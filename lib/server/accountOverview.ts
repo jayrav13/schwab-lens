@@ -258,8 +258,7 @@ function buildNavStrip(
       : state.navSeries;
 
   // Mark-to-market live NAV from the latest snapshot wins when present —
-  // it reflects what the account is actually worth today (stocks + cash).
-  // Options market value is intentionally excluded for now.
+  // it reflects what the account is actually worth today (stocks + cash + options).
   const current =
     liveNav ?? series.at(-1)?.nav ?? state.config.seedValue;
 
@@ -322,7 +321,7 @@ function isOptionLike(assetType: string | null): boolean {
 function computeLiveNavFromSnapshot(rows: PositionSnapshotRow[]): number {
   let total = 0;
   for (const r of rows) {
-    if (isCashRow(r) || isEquityLike(r.asset_type)) {
+    if (isCashRow(r) || isEquityLike(r.asset_type) || isOptionLike(r.asset_type)) {
       total += r.market_value ?? 0;
     }
   }
