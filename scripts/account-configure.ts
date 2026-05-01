@@ -1,7 +1,9 @@
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import type Database from "better-sqlite3";
 import { getDb } from "@/lib/db/connection";
 import {
+  getAccountByExternalId,
   listAccounts,
   setBenchmark,
   setSeed,
@@ -97,7 +99,103 @@ async function configureOne(
   return { touched };
 }
 
+export type CliFlags = {
+  account?: string;
+  seedDate?: Choice<string>;
+  seedValue?: Choice<number>;
+  benchmark?: Choice<string>;
+};
+
+export function parseFlags(argv: string[]): CliFlags {
+  const flags: CliFlags = {};
+  for (const arg of argv) {
+    if (!arg.startsWith("--")) continue;
+    const eq = arg.indexOf("=");
+    if (eq < 0) throw new Error(`expected --key=value, got "${arg}"`);
+    const key = arg.slice(2, eq);
+    const value = arg.slice(eq + 1);
+    switch (key) {
+      case "account":
+        flags.account = value;
+        break;
+      case "seed-date":
+        flags.seedDate = parseDate(value);
+        break;
+      case "seed-value":
+        flags.seedValue = parseMoney(value);
+        break;
+      case "benchmark":
+        flags.benchmark = parseTicker(value);
+        break;
+      default:
+        throw new Error(`unknown flag --${key}`);
+    }
+  }
+  return flags;
+}
+
+export function configureNonInteractive(
+  flags: CliFlags,
+  dbOverride?: Database.Database,
+): void {
+  if (flags.account === undefined) {
+    throw new Error("--account is required for non-interactive mode");
+  }
+  if (
+    flags.seedDate === undefined &&
+    flags.seedValue === undefined &&
+    flags.benchmark === undefined
+  ) {
+    throw new Error(
+      "non-interactive mode requires at least one of --seed-date, --seed-value, --benchmark",
+    );
+  }
+
+  const db = dbOverride ?? getDb();
+  const account = getAccountByExternalId(db, flags.account);
+  if (!account) {
+    throw new Error(
+      `account with external_id="${flags.account}" not found — run \`npm run ingest\` first or check the id`,
+    );
+  }
+
+  if (flags.seedDate !== undefined || flags.seedValue !== undefined) {
+    const dateChoice = flags.seedDate ?? { kind: "keep" };
+    const valueChoice = flags.seedValue ?? { kind: "keep" };
+    const nextDate =
+      dateChoice.kind === "set"
+        ? dateChoice.value
+        : dateChoice.kind === "clear"
+          ? null
+          : account.seedDate;
+    const nextValue =
+      valueChoice.kind === "set"
+        ? valueChoice.value
+        : valueChoice.kind === "clear"
+          ? null
+          : account.seedValue;
+    setSeed(db, account.externalId, nextDate, nextValue);
+  }
+
+  if (flags.benchmark !== undefined) {
+    const next =
+      flags.benchmark.kind === "set" ? flags.benchmark.value : null;
+    setBenchmark(db, account.externalId, next);
+  }
+
+  const after = getAccountByExternalId(db, flags.account);
+  console.log(`Updated ${account.label} (external_id ${account.externalId}):`);
+  console.log(`  ${after ? fmtCurrent(after) : "(not found after update)"}`);
+}
+
 async function main() {
+  const flags = parseFlags(process.argv.slice(2));
+
+  if (Object.keys(flags).length > 0) {
+    configureNonInteractive(flags);
+    return;
+  }
+
   const db = getDb();
   const accounts = listAccounts(db);
 
