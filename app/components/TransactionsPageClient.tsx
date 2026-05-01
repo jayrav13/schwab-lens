@@ -27,7 +27,7 @@ const ACTION_LABEL: Record<string, string> = {
   WireSent: "WIR",
   MiscCashEntry: "MSC",
   ServiceFee: "FEE",
-  Unknown: "???",
+  Unknown: "UNK",
 };
 
 const ACTION_STYLES: Record<string, string> = {
@@ -169,7 +169,7 @@ export function TransactionsPageClient({
                 <button
                   key={a}
                   onClick={() => toggleAction(a)}
-                  className={`px-2 py-0.5 rounded border text-[11px] ${
+                  className={`px-2 py-0.5 rounded border text-[11px] cursor-pointer ${
                     on
                       ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
                       : "bg-white dark:bg-neutral-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-neutral-700"
@@ -192,7 +192,7 @@ export function TransactionsPageClient({
                 <button
                   key={t}
                   onClick={() => toggleTicker(t)}
-                  className={`px-2 py-0.5 rounded border text-[11px] ${
+                  className={`px-2 py-0.5 rounded border text-[11px] cursor-pointer ${
                     on
                       ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
                       : "bg-white dark:bg-neutral-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-neutral-700"
