@@ -38,9 +38,16 @@ function formatContract(c: ClosedTrade["contract"]): string {
   return `${c.ticker} $${c.strike.toFixed(2)} ${c.type[0]}`;
 }
 
-export function TradesPageClient({ trades }: { trades: ClosedTrade[] }) {
+export function TradesPageClient({
+  trades,
+  uuid,
+}: {
+  trades: ClosedTrade[];
+  uuid: string;
+}) {
   const router = useRouter();
   const sp = useSearchParams();
+  const basePath = `/accounts/${uuid}/trades`;
 
   const { filter, sort } = useMemo(
     () => parseTradesQuery(new URLSearchParams(sp.toString())),
@@ -50,9 +57,9 @@ export function TradesPageClient({ trades }: { trades: ClosedTrade[] }) {
   const updateQuery = useCallback(
     (nextFilter: TradesFilter, nextSort: TradesSort) => {
       const qs = serializeTradesQuery(nextFilter, nextSort).toString();
-      router.replace(qs ? `/trades?${qs}` : "/trades");
+      router.replace(qs ? `${basePath}?${qs}` : basePath);
     },
-    [router],
+    [router, basePath],
   );
 
   const allTickers = useMemo(
@@ -136,7 +143,7 @@ export function TradesPageClient({ trades }: { trades: ClosedTrade[] }) {
                 <button
                   key={t}
                   onClick={() => toggleTicker(t)}
-                  className={`px-2 py-0.5 rounded border text-[11px] ${
+                  className={`px-2 py-0.5 rounded border text-[11px] cursor-pointer ${
                     on
                       ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
                       : "bg-white dark:bg-neutral-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-neutral-700"
@@ -159,7 +166,7 @@ export function TradesPageClient({ trades }: { trades: ClosedTrade[] }) {
                 <button
                   key={o}
                   onClick={() => toggleOutcome(o)}
-                  className={`px-2 py-0.5 rounded border text-[11px] ${
+                  className={`px-2 py-0.5 rounded border text-[11px] cursor-pointer ${
                     on
                       ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
                       : "bg-white dark:bg-neutral-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-neutral-700"
