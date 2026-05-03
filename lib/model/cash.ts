@@ -1,4 +1,5 @@
 import type { Transaction } from "@/lib/csv/types";
+import { classifyAction } from "@/lib/model/metrics/cashflow";
 import type { CashPoint, FlowPoint, Seed } from "@/lib/model/types";
 
 export function computeCashLedger(
@@ -25,7 +26,7 @@ export function computeCashLedger(
 
   for (const t of sorted) {
     balance += t.amount;
-    if (t.action === "Journal" || t.action === "WireSent") {
+    if (classifyAction(t.action) === "external") {
       externalFlows.push({ date: t.tradeDate, signedAmount: t.amount });
       cumulativeExternal += t.amount;
     }
