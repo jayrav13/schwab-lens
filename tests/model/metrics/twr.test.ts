@@ -318,3 +318,61 @@ describe("computeTwr — unknown actions in period", () => {
     });
   });
 });
+
+describe("computeTwr — Modified Dietz cross-check", () => {
+  it("matches a textbook Modified Dietz hand-computation within 1e-4", () => {
+    // Reference fixture: Investopedia-style Modified Dietz example.
+    // Period: 90 days, [2026-01-01, 2026-04-01]
+    // Beginning value: $100,000 (snapshot 2026-01-01)
+    // Ending value:    $112,000 (snapshot 2026-04-01)
+    // External cash flows during period:
+    //   2026-01-31 deposit +$5,000 (day 30 of 90)
+    //   2026-03-02 withdraw -$3,000 (day 60 of 90)
+    //
+    // Modified Dietz over the WHOLE period (single sub-period since there's
+    // no interior snapshot):
+    //   net_flows = 5000 - 3000 = 2000
+    //   weighted = 5000 * (90 - 30)/90 + (-3000) * (90 - 60)/90
+    //            = 5000 * 60/90 + (-3000) * 30/90
+    //            = 3333.333 + (-1000)
+    //            = 2333.333
+    //   r = (112000 - 100000 - 2000) / (100000 + 2333.333)
+    //     = 10000 / 102333.333
+    //     ≈ 0.0977199
+    //
+    // computeTwr produces a chain of one segment (no interior snapshots),
+    // so its TWR equals the Modified Dietz number.
+
+    const navPoints: NavPoint[] = [
+      { date: "2026-01-01", nav: 100000 },
+      { date: "2026-04-01", nav: 112000 },
+    ];
+
+    const transactions: Transaction[] = [
+      tx({
+        tradeDate: "2026-01-31",
+        action: "Journal",
+        rawAction: "MoneyLink Deposit",
+        amount: 5000,
+      }),
+      tx({
+        tradeDate: "2026-03-02",
+        action: "WireSent",
+        rawAction: "Wire Sent",
+        amount: -3000,
+      }),
+    ];
+
+    const result = computeTwr({
+      navPoints,
+      transactions,
+      period: { from: "2026-01-01", to: "2026-04-01" },
+      seed: null,
+    });
+
+    const dietz = 10000 / (100000 + 2333.333333);
+    expect(result.twr).not.toBeNull();
+    expect(result.twr!).toBeCloseTo(dietz, 4);
+    expect(result.twr!).toBeCloseTo(0.0977199, 4);
+  });
+});
