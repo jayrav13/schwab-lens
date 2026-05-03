@@ -166,8 +166,6 @@ describe("loadAccountOverviewView", () => {
     });
     if (result?.kind !== "ready") throw new Error("expected ready");
     expect(result.transactions).toHaveLength(4);
-    expect(result.nav.computation.seedDate).toBe("");
-    expect(result.nav.computation.seedValue).toBe(0);
     expect(result.warnings.some((w) => w.kind === "MissingSeed")).toBe(true);
   });
 
@@ -282,7 +280,65 @@ describe("loadAccountOverviewView", () => {
       includeMarketData: false,
     });
     if (result?.kind !== "ready") throw new Error("expected ready");
-    expect(result.nav.computation.clampedToSeed).toBe(true);
-    expect(result.nav.computation.effectiveStart).toBe("2026-03-01");
+    expect(result.nav.clamped).toBe(true);
+    expect(result.nav.effectiveStart?.date).toBe("2026-03-01");
+  });
+
+  it("computes TWR over snapshots within the requested period", async () => {
+    const db = makeDb();
+    const account = upsertAccount(db, { externalId: "twr1", label: "TWR Demo" });
+    setSeed(db, "twr1", "2026-01-01", 10000);
+
+    // Two snapshots: 10000 -> 11000 (no flows). r = 0.1, so twr should be 0.1.
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-01-01",
+        symbol: "ACME",
+        description: "ACME",
+        quantity: 100,
+        price: 100,
+        marketValue: 10000,
+        costBasis: 10000,
+        assetType: "equity",
+        raw: {},
+      },
+      "snap1.csv",
+    );
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-04-01",
+        symbol: "ACME",
+        description: "ACME",
+        quantity: 100,
+        price: 110,
+        marketValue: 11000,
+        costBasis: 10000,
+        assetType: "equity",
+        raw: {},
+      },
+      "snap2.csv",
+    );
+
+    const result = await loadAccountOverviewView(account.uuid, {
+      db,
+      period: "All",
+      today: "2026-04-29",
+      includeMarketData: false,
+    });
+    if (result?.kind !== "ready") throw new Error("expected ready");
+
+    expect(result.nav.twr).not.toBeNull();
+    // Segments: seed/2026-01-01 (10000) → 2026-04-01 (11000): r=+10%
+    //           2026-04-01 (11000) → 2026-04-29 (live=11000): r=0
+    // chained = (1+0.10) * (1+0) - 1 = 0.10
+    expect(result.nav.twr!).toBeCloseTo(0.1, 4);
+    expect(result.nav.clamped).toBe(false);
+    expect(result.nav.computation.segments).toHaveLength(2);
+    expect(result.nav.computation.segments[0].return).toBeCloseTo(0.1, 6);
+    expect(result.nav.computation.segments[1].return).toBeCloseTo(0, 6);
   });
 });

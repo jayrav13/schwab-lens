@@ -6,6 +6,7 @@ import {
 } from "@/lib/db/repos/accounts";
 import { listTransactionsByAccount } from "@/lib/db/repos/transactions";
 import {
+  getAllSnapshotsByAccount,
   getEarliestSnapshotDate,
   getLatestSnapshotDate,
   getSnapshotByDate,
@@ -20,14 +21,23 @@ import {
 import { computePortfolioValueSeries } from "@/lib/model/metrics/portfolio_value";
 import { buildPortfolio } from "@/lib/model/portfolio";
 import { chooseSeed } from "@/lib/positions/seed";
-import type { Config, PortfolioState, Seed, Warning } from "@/lib/model/types";
+import type {
+  BenchmarkResult,
+  Config,
+  PortfolioState,
+  Seed,
+  TwrSegment,
+  Warning,
+} from "@/lib/model/types";
 import type { Transaction } from "@/lib/csv/types";
 import { yesterdayInET } from "@/lib/util/dates";
 import {
   resolvePeriod,
   type PeriodKey,
-  type ResolvedPeriod,
 } from "@/lib/server/period";
+import { computeTwr } from "@/lib/model/metrics/twr";
+import { navSeriesFromSnapshots } from "@/lib/model/metrics/navSeries";
+import { computeBenchmark } from "@/lib/model/metrics/benchmark";
 
 export type HoldingRow = {
   symbol: string;
@@ -50,18 +60,16 @@ export type EquityAllocationRow = {
 
 export type NavStripData = {
   current: number;
-  start: number;
-  changeAmount: number;
-  changePct: number;
+  twr: number | null;
+  effectiveStart: { date: string; nav: number } | null;
+  effectiveEnd: { date: string; nav: number } | null;
+  clamped: boolean;
+  benchmark: BenchmarkResult | null;
   computation: {
     period: PeriodKey;
     requestedStart: string;
-    effectiveStart: string;
-    end: string;
-    clampedToSeed: boolean;
-    seedDate: string;
-    seedValue: number;
-    formula: string;
+    requestedEnd: string;
+    segments: TwrSegment[];
   };
 };
 
@@ -156,7 +164,15 @@ export async function loadAccountOverviewView(
     latestSnapshotRows.length > 0
       ? computeLiveNavFromSnapshot(latestSnapshotRows)
       : null;
-  const nav = buildNavStrip(state, liveNav, period);
+  const allSnapshotRows = getAllSnapshotsByAccount(db, account.id);
+  const nav = await buildNavStrip(
+    account,
+    state,
+    allSnapshotRows,
+    period,
+    liveNav,
+    includeMarket,
+  );
 
   const quoteMap: Record<string, Quote | null> = {};
   if (includeMarket) {
@@ -251,55 +267,86 @@ async function enrichWithMarketData(
   }
 }
 
-function buildNavStrip(
+async function buildNavStrip(
+  account: Account,
   state: PortfolioState,
+  snapshotRows: PositionSnapshotRow[],
+  period: { key: PeriodKey; start: string; end: string; clampedToSeed: boolean },
   liveNav: number | null,
-  period: ResolvedPeriod,
-): NavStripData {
-  const series =
-    state.portfolioValueSeries && state.portfolioValueSeries.length > 0
-      ? state.portfolioValueSeries
-      : state.navSeries;
+  includeMarketData: boolean,
+): Promise<NavStripData> {
+  const navPoints = navSeriesFromSnapshots(snapshotRows);
 
-  // Mark-to-market live NAV from the latest snapshot wins when present —
-  // it reflects what the account is actually worth today (stocks + cash + options).
+  // Append the live snapshot's mark-to-market value as the last NAV point
+  // so the strip reflects "today" rather than the most recent CSV export.
+  const augmented =
+    liveNav !== null && navPoints.length > 0
+      ? [...navPoints, { date: period.end, nav: liveNav }]
+      : navPoints;
+
+  const seed =
+    account.seedDate !== null && account.seedValue !== null
+      ? { date: account.seedDate, value: account.seedValue }
+      : null;
+
+  const twrResult = computeTwr({
+    navPoints: augmented,
+    transactions: state.transactions,
+    period: { from: period.start, to: period.end },
+    seed,
+  });
+
+  for (const w of twrResult.warnings) state.warnings.push(w);
+
+  let benchmark: BenchmarkResult | null = null;
+  if (
+    includeMarketData &&
+    typeof account.benchmark === "string" &&
+    account.benchmark.length > 0 &&
+    twrResult.effectiveStart &&
+    twrResult.effectiveEnd
+  ) {
+    const res = await loadHistoricalCloses(
+      account.benchmark,
+      twrResult.effectiveStart.date,
+      twrResult.effectiveEnd.date,
+    );
+    if (res.kind === "ok") {
+      benchmark = computeBenchmark({
+        ticker: account.benchmark,
+        closes: res.closes,
+        fromDate: twrResult.effectiveStart.date,
+        toDate: twrResult.effectiveEnd.date,
+      });
+    } else {
+      state.warnings.push({
+        kind: "MissingHistoricalPrices",
+        ticker: account.benchmark,
+        reason: res.message,
+      });
+    }
+  }
+
   const current =
-    liveNav ?? series.at(-1)?.nav ?? state.config.seedValue;
-
-  const startPoint = closestOnOrBefore(series, period.start);
-  const start = startPoint?.nav ?? state.config.seedValue;
-
-  const changeAmount = current - start;
-  const changePct = start === 0 ? 0 : changeAmount / start;
+    liveNav ?? augmented.at(-1)?.nav ?? state.config.seedValue;
 
   return {
     current,
-    start,
-    changeAmount,
-    changePct,
+    twr: twrResult.twr,
+    effectiveStart: twrResult.effectiveStart,
+    effectiveEnd: twrResult.effectiveEnd,
+    // Surface clamping from either the period (requested span fell before
+    // seed) or the TWR engine (no seed and earliest snapshot post-dated
+    // the requested start).
+    clamped: period.clampedToSeed || twrResult.clamped,
+    benchmark,
     computation: {
       period: period.key,
       requestedStart: period.start,
-      effectiveStart: startPoint?.date ?? period.start,
-      end: period.end,
-      clampedToSeed: period.clampedToSeed,
-      seedDate: state.config.seedDate,
-      seedValue: state.config.seedValue,
-      formula: "(end − start) / start",
+      requestedEnd: period.end,
+      segments: twrResult.segments,
     },
   };
-}
-
-function closestOnOrBefore(
-  series: Array<{ date: string; nav: number }>,
-  target: string,
-): { date: string; nav: number } | null {
-  let last: { date: string; nav: number } | null = null;
-  for (const p of series) {
-    if (p.date <= target) last = p;
-    else break;
-  }
-  return last;
 }
 
 function isEquityLike(assetType: string | null): boolean {

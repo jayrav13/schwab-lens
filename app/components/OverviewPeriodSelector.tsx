@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { NavStripData } from "@/lib/server/accountOverview";
 import type { PeriodKey } from "@/lib/server/period";
-import { formatCurrency } from "@/lib/util/money";
 
 const PERIODS: PeriodKey[] = ["1M", "3M", "YTD", "1Y", "All"];
 
@@ -11,7 +10,7 @@ type Props = {
 };
 
 export function OverviewPeriodSelector({ uuid, nav }: Props) {
-  const { computation } = nav;
+  const { computation, effectiveStart, clamped } = nav;
   return (
     <div className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-2 mb-4 flex items-center justify-between gap-4">
       <div className="flex items-center gap-1">
@@ -37,18 +36,13 @@ export function OverviewPeriodSelector({ uuid, nav }: Props) {
         <div className="absolute right-0 mt-2 w-80 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 shadow-lg z-10 text-left">
           <div>Period: <code>{computation.period}</code></div>
           <div>Requested start: <code>{computation.requestedStart}</code></div>
+          <div>Requested end: <code>{computation.requestedEnd}</code></div>
           <div>
-            Effective start: <code>{computation.effectiveStart}</code>
-            {computation.clampedToSeed ? " (clamped to seed)" : ""}
+            Effective start: <code>{effectiveStart?.date ?? "—"}</code>
+            {clamped ? " (clamped to seed)" : ""}
           </div>
-          <div>End: <code>{computation.end}</code></div>
-          <div>
-            Seed: <code>{formatCurrency(computation.seedValue)}</code> on{" "}
-            <code>{computation.seedDate}</code>
-          </div>
-          <div>Formula: <code>{computation.formula}</code></div>
           <div className="mt-2 text-[10px] text-gray-400">
-            Snapshot-aligned TWR is tracked separately — see #2.
+            Snapshot-aligned TWR — see /_debug/twr for the full chain.
           </div>
         </div>
       </details>

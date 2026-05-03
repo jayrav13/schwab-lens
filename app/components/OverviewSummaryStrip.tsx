@@ -8,29 +8,47 @@ type Props = {
 };
 
 export function OverviewSummaryStrip({ nav, cash, holdingsCount }: Props) {
-  const { current, changeAmount, changePct, computation } = nav;
-  const positive = changeAmount >= 0;
+  const { current, twr, effectiveStart, effectiveEnd, clamped, computation } =
+    nav;
   const periodLabel = computation.period;
-  const sign = positive ? "+" : "−";
-  const hasHonestSeed = computation.seedValue > 0 && computation.seedDate !== "";
+  const hasTwr = twr !== null;
+  const positive = hasTwr && twr! >= 0;
+
+  let returnDelta: string;
+  if (!hasTwr) {
+    returnDelta = "not enough data";
+  } else if (effectiveStart && effectiveEnd) {
+    const base = `${effectiveStart.date} → ${effectiveEnd.date}`;
+    returnDelta = clamped ? `${base} (clamped to seed)` : base;
+  } else {
+    returnDelta = "—";
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
       <Card
         label="NAV"
         value={formatCurrency(current)}
-        delta={`as of ${computation.end}`}
+        delta={`as of ${effectiveEnd?.date ?? computation.requestedEnd}`}
       />
       <Card
         label={`Return · ${periodLabel}`}
-        value={hasHonestSeed ? `${positive ? "+" : ""}${(changePct * 100).toFixed(2)}%` : "—"}
-        valueClass={hasHonestSeed ? (positive ? "text-emerald-600" : "text-red-600") : "text-gray-400 dark:text-gray-500"}
-        delta={
-          hasHonestSeed
-            ? `${sign}${formatCurrency(Math.abs(changeAmount))} since ${computation.effectiveStart}`
-            : "no seed configured"
+        value={
+          hasTwr
+            ? `${positive ? "+" : ""}${(twr! * 100).toFixed(2)}%`
+            : "—"
         }
-        deltaClass={hasHonestSeed ? (positive ? "text-emerald-600" : "text-red-600") : undefined}
+        valueClass={
+          hasTwr
+            ? positive
+              ? "text-emerald-600"
+              : "text-red-600"
+            : "text-gray-400 dark:text-gray-500"
+        }
+        delta={returnDelta}
+        deltaClass={
+          hasTwr ? (positive ? "text-emerald-600" : "text-red-600") : undefined
+        }
       />
       <Card
         label="Cash"
