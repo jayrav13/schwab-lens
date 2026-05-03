@@ -6,6 +6,7 @@ import {
   getAccountByExternalId,
   listAccounts,
   setBenchmark,
+  setLabel,
   setSeed,
   type Account,
 } from "@/lib/db/repos/accounts";
@@ -41,6 +42,18 @@ function parseTicker(raw: string): Choice<string> {
     throw new Error(`expected ticker symbol, got "${v}"`);
   }
   return { kind: "set", value: v.toUpperCase() };
+}
+
+function parseLabel(raw: string): Choice<string> {
+  const v = raw.trim();
+  if (v === "") return { kind: "keep" };
+  if (v === "-") {
+    throw new Error("--label cannot be cleared (label is required)");
+  }
+  if (v.length > 100) {
+    throw new Error(`label too long (${v.length} chars, max 100)`);
+  }
+  return { kind: "set", value: v };
 }
 
 function fmtCurrent(account: Account): string {
@@ -93,6 +106,14 @@ async function configureOne(
     touched = true;
   }
 
+  const labelRaw = await rl.question(
+    `  Label (blank=keep, current="${account.label}"): `,
+  );
+  if (labelRaw.trim() !== "") {
+    setLabel(db, account.externalId, labelRaw.trim());
+    touched = true;
+  }
+
   if (touched) console.log("  ✓ Updated.");
   else console.log("  (no change)");
 
@@ -104,6 +125,7 @@ export type CliFlags = {
   seedDate?: Choice<string>;
   seedValue?: Choice<number>;
   benchmark?: Choice<string>;
+  label?: Choice<string>;
 };
 
 export function parseFlags(argv: string[]): CliFlags {
@@ -127,6 +149,9 @@ export function parseFlags(argv: string[]): CliFlags {
       case "benchmark":
         flags.benchmark = parseTicker(value);
         break;
+      case "label":
+        flags.label = parseLabel(value);
+        break;
       default:
         throw new Error(`unknown flag --${key}`);
     }
@@ -144,10 +169,11 @@ export function configureNonInteractive(
   if (
     flags.seedDate === undefined &&
     flags.seedValue === undefined &&
-    flags.benchmark === undefined
+    flags.benchmark === undefined &&
+    flags.label === undefined
   ) {
     throw new Error(
-      "non-interactive mode requires at least one of --seed-date, --seed-value, --benchmark",
+      "non-interactive mode requires at least one of --seed-date, --seed-value, --benchmark, --label",
     );
   }
 
@@ -181,6 +207,10 @@ export function configureNonInteractive(
     const next =
       flags.benchmark.kind === "set" ? flags.benchmark.value : null;
     setBenchmark(db, account.externalId, next);
+  }
+
+  if (flags.label !== undefined && flags.label.kind === "set") {
+    setLabel(db, account.externalId, flags.label.value);
   }
 
   const after = getAccountByExternalId(db, flags.account);

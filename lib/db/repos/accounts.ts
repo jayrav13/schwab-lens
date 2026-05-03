@@ -119,3 +119,14 @@ export function setBenchmark(
     externalId,
   );
 }
+
+export function setLabel(
+  db: Database.Database,
+  externalId: string,
+  label: string,
+): void {
+  db.prepare("UPDATE accounts SET label = ? WHERE external_id = ?").run(
+    label,
+    externalId,
+  );
+}
