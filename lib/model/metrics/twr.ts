@@ -34,6 +34,15 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
 
   const effectiveEnd = inPeriod[inPeriod.length - 1] ?? null;
 
+  const clamped =
+    !useSeed &&
+    effectiveStart !== null &&
+    effectiveStart.date > input.period.from;
+
+  if (clamped && effectiveStart) {
+    warnings.push({ kind: "Clamped", earliestDate: effectiveStart.date });
+  }
+
   if (
     !effectiveStart ||
     !effectiveEnd ||
@@ -43,7 +52,7 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
       twr: null,
       effectiveStart,
       effectiveEnd,
-      clamped: false,
+      clamped,
       segments,
       warnings,
     };
@@ -99,7 +108,7 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
     twr: chained - 1,
     effectiveStart,
     effectiveEnd,
-    clamped: false,
+    clamped,
     segments,
     warnings,
   };

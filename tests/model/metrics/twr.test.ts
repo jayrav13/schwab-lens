@@ -133,3 +133,41 @@ describe("computeTwr — seed backfill", () => {
     expect(result.effectiveStart?.nav).toBe(10000);
   });
 });
+
+describe("computeTwr — clamping", () => {
+  it("sets clamped=true when from is before any snapshot and no seed", () => {
+    const navPoints: NavPoint[] = [
+      { date: "2026-02-01", nav: 10000 },
+      { date: "2026-04-01", nav: 11000 },
+    ];
+    const result = computeTwr({
+      navPoints,
+      transactions: [],
+      period: { from: "2025-01-01", to: "2026-04-01" },
+      seed: null,
+    });
+
+    expect(result.clamped).toBe(true);
+    expect(result.effectiveStart?.date).toBe("2026-02-01");
+    expect(result.warnings).toContainEqual({
+      kind: "Clamped",
+      earliestDate: "2026-02-01",
+    });
+  });
+
+  it("does not clamp when from <= seedDate and seed is set", () => {
+    const navPoints: NavPoint[] = [
+      { date: "2026-02-01", nav: 10000 },
+      { date: "2026-04-01", nav: 11000 },
+    ];
+    const result = computeTwr({
+      navPoints,
+      transactions: [],
+      period: { from: "2025-01-01", to: "2026-04-01" },
+      seed: { date: "2025-12-01", value: 9000 },
+    });
+
+    expect(result.clamped).toBe(false);
+    expect(result.warnings.find((w) => w.kind === "Clamped")).toBeUndefined();
+  });
+});
