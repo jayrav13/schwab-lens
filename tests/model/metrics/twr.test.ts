@@ -266,3 +266,55 @@ describe("computeTwr — negative interior NAV", () => {
     });
   });
 });
+
+describe("computeTwr — unknown actions in period", () => {
+  it("emits one UnknownActionInPeriod warning per unknown tx in the effective window", () => {
+    const navPoints: NavPoint[] = [
+      { date: "2026-01-01", nav: 10000 },
+      { date: "2026-04-01", nav: 11000 },
+    ];
+
+    const result = computeTwr({
+      navPoints,
+      transactions: [
+        tx({
+          tradeDate: "2026-02-01",
+          action: "Unknown",
+          rawAction: "Misc Cash Entry",
+          amount: 50,
+        }),
+        tx({
+          tradeDate: "2026-03-15",
+          action: "Unknown",
+          rawAction: "Service Fee",
+          amount: -2,
+        }),
+        tx({
+          tradeDate: "2025-12-31",
+          action: "Unknown",
+          rawAction: "Older",
+          amount: 1,
+        }),
+      ],
+      period: { from: "2026-01-01", to: "2026-04-01" },
+      seed: null,
+    });
+
+    const unknowns = result.warnings.filter(
+      (w) => w.kind === "UnknownActionInPeriod",
+    );
+    expect(unknowns).toHaveLength(2);
+    expect(unknowns[0]).toMatchObject({
+      kind: "UnknownActionInPeriod",
+      date: "2026-02-01",
+      rawAction: "Misc Cash Entry",
+      amount: 50,
+    });
+    expect(unknowns[1]).toMatchObject({
+      kind: "UnknownActionInPeriod",
+      date: "2026-03-15",
+      rawAction: "Service Fee",
+      amount: -2,
+    });
+  });
+});

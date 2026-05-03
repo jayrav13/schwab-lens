@@ -6,7 +6,10 @@ import type {
   TwrSegment,
   Warning,
 } from "@/lib/model/types";
-import { externalFlowsBetween } from "@/lib/model/metrics/cashflow";
+import {
+  externalFlowsBetween,
+  unknownActionsBetween,
+} from "@/lib/model/metrics/cashflow";
 
 export type ComputeTwrInput = {
   navPoints: NavPoint[];
@@ -64,6 +67,20 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
       segments,
       warnings,
     };
+  }
+
+  const unknowns = unknownActionsBetween(
+    input.transactions,
+    effectiveStart.date,
+    effectiveEnd.date,
+  );
+  for (const u of unknowns) {
+    warnings.push({
+      kind: "UnknownActionInPeriod",
+      date: u.tradeDate,
+      rawAction: u.rawAction,
+      amount: u.amount,
+    });
   }
 
   // Build the chain of points: effectiveStart, then any snapshots after
