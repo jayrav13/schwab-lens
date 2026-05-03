@@ -332,13 +332,12 @@ describe("loadAccountOverviewView", () => {
     if (result?.kind !== "ready") throw new Error("expected ready");
 
     expect(result.nav.twr).not.toBeNull();
-    // Segments: seed/2026-01-01 (10000) → 2026-04-01 (11000): r=+10%
-    //           2026-04-01 (11000) → 2026-04-29 (live=11000): r=0
-    // chained = (1+0.10) * (1+0) - 1 = 0.10
+    // Single segment: 2026-01-01 (10000) → 2026-04-01 (11000), r = +10%.
+    // The live-NAV synthetic point is suppressed because liveNav === last
+    // snapshot's NAV (11000), avoiding a phantom 0% trailing segment.
     expect(result.nav.twr!).toBeCloseTo(0.1, 4);
     expect(result.nav.clamped).toBe(false);
-    expect(result.nav.computation.segments).toHaveLength(2);
+    expect(result.nav.computation.segments).toHaveLength(1);
     expect(result.nav.computation.segments[0].return).toBeCloseTo(0.1, 6);
-    expect(result.nav.computation.segments[1].return).toBeCloseTo(0, 6);
   });
 });

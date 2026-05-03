@@ -39,7 +39,7 @@ export function OverviewPeriodSelector({ uuid, nav }: Props) {
           <div>Requested end: <code>{computation.requestedEnd}</code></div>
           <div>
             Effective start: <code>{effectiveStart?.date ?? "—"}</code>
-            {clamped ? " (clamped to seed)" : ""}
+            {clamped ? " (clamped)" : ""}
           </div>
           <div className="mt-2 text-[10px] text-gray-400">
             Snapshot-aligned TWR — see /_debug/twr for the full chain.

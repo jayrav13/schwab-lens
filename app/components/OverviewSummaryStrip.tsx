@@ -19,7 +19,7 @@ export function OverviewSummaryStrip({ nav, cash, holdingsCount }: Props) {
     returnDelta = "not enough data";
   } else if (effectiveStart && effectiveEnd) {
     const base = `${effectiveStart.date} → ${effectiveEnd.date}`;
-    returnDelta = clamped ? `${base} (clamped to seed)` : base;
+    returnDelta = clamped ? `${base} (clamped)` : base;
   } else {
     returnDelta = "—";
   }

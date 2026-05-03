@@ -279,8 +279,14 @@ async function buildNavStrip(
 
   // Append the live snapshot's mark-to-market value as the last NAV point
   // so the strip reflects "today" rather than the most recent CSV export.
+  // Skip when liveNav matches the latest snapshot's NAV exactly — the
+  // synthetic point would create a phantom 0%-return trailing segment.
+  const last = navPoints.at(-1);
   const augmented =
-    liveNav !== null && navPoints.length > 0
+    liveNav !== null &&
+    last !== undefined &&
+    period.end > last.date &&
+    liveNav !== last.nav
       ? [...navPoints, { date: period.end, nav: liveNav }]
       : navPoints;
 
