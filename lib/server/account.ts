@@ -6,6 +6,7 @@ import {
 } from "@/lib/db/repos/accounts";
 import { listTransactionsByAccount } from "@/lib/db/repos/transactions";
 import {
+  getAllSnapshotsByAccount,
   getEarliestSnapshotDate,
   getLatestSnapshotDate,
   getSnapshotByDate,
@@ -23,9 +24,12 @@ import {
 import { computePortfolioValueSeries } from "@/lib/model/metrics/portfolio_value";
 import { buildPortfolio } from "@/lib/model/portfolio";
 import { chooseSeed } from "@/lib/positions/seed";
-import type { Config, PortfolioState, Seed } from "@/lib/model/types";
+import type { Config, PortfolioState, Seed, TwrResult } from "@/lib/model/types";
 import type { PositionsSnapshot } from "@/lib/positions/types";
 import { yesterdayInET } from "@/lib/util/dates";
+import { resolvePeriod, type PeriodKey } from "@/lib/server/period";
+import { computeTwr } from "@/lib/model/metrics/twr";
+import { navSeriesFromSnapshots } from "@/lib/model/metrics/navSeries";
 
 export type AccountOptionsView =
   | {
@@ -36,12 +40,15 @@ export type AccountOptionsView =
       loadedAt: string;
       latestSnapshot: PositionsSnapshot | null;
       markToMarket: MarkToMarket | null;
+      twr: TwrResult;
     }
   | { kind: "no-data"; account: Account };
 
 export interface LoadAccountOptionsViewOpts {
   db?: Database.Database;
   includeMarketData?: boolean;
+  period?: PeriodKey;
+  today?: string;
 }
 
 export async function loadAccountOptionsView(
@@ -206,6 +213,30 @@ export async function loadAccountOptionsView(
     }
   }
 
+  const today = opts.today ?? yesterdayInET();
+  const periodKey = opts.period ?? "All";
+  const period = resolvePeriod(
+    periodKey,
+    today,
+    account.seedDate ?? earliestSnapshot?.asOf?.slice(0, 10) ?? today,
+  );
+
+  const navPoints = navSeriesFromSnapshots(
+    getAllSnapshotsByAccount(db, account.id),
+  );
+
+  const twr = computeTwr({
+    navPoints,
+    transactions: state.transactions,
+    period: { from: period.start, to: period.end },
+    seed:
+      account.seedDate !== null && account.seedValue !== null
+        ? { date: account.seedDate, value: account.seedValue }
+        : null,
+  });
+
+  for (const w of twr.warnings) state.warnings.push(w);
+
   const txSourceFiles = Array.from(
     new Set(txRows.map((r) => r.source_file)),
   ).sort();
@@ -225,6 +256,7 @@ export async function loadAccountOptionsView(
     loadedAt: new Date().toISOString(),
     latestSnapshot,
     markToMarket,
+    twr,
   };
 }
 

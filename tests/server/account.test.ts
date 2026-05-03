@@ -185,4 +185,52 @@ describe("loadAccountOptionsView", () => {
     if (result?.kind !== "ready") return;
     expect(result.state.config.seedDate).toBe("2026-04-01");
   });
+
+  it("includes a twr result with the loaded view", async () => {
+    const db = makeDb();
+    const account = upsertAccount(db, { externalId: "twr2", label: "TWR" });
+    setSeed(db, "twr2", "2026-01-01", 10000);
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-01-01",
+        symbol: "ACME",
+        description: "A",
+        quantity: 100,
+        price: 100,
+        marketValue: 10000,
+        costBasis: 10000,
+        assetType: "equity",
+        raw: {},
+      },
+      "s1.csv",
+    );
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-03-01",
+        symbol: "ACME",
+        description: "A",
+        quantity: 100,
+        price: 110,
+        marketValue: 11000,
+        costBasis: 10000,
+        assetType: "equity",
+        raw: {},
+      },
+      "s2.csv",
+    );
+
+    const result = await loadAccountOptionsView(account.uuid, {
+      db,
+      includeMarketData: false,
+      today: "2026-03-15",
+    });
+    if (result?.kind !== "ready") throw new Error("expected ready");
+    expect(result.twr).toBeDefined();
+    expect(result.twr.twr).not.toBeNull();
+    expect(result.twr.twr!).toBeCloseTo(0.1, 4);
+  });
 });
