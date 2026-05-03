@@ -43,11 +43,19 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
     warnings.push({ kind: "Clamped", earliestDate: effectiveStart.date });
   }
 
-  if (
-    !effectiveStart ||
-    !effectiveEnd ||
-    effectiveStart.date === effectiveEnd.date
-  ) {
+  if (!effectiveStart || !effectiveEnd) {
+    return {
+      twr: null,
+      effectiveStart,
+      effectiveEnd,
+      clamped,
+      segments,
+      warnings,
+    };
+  }
+
+  if (effectiveStart.date === effectiveEnd.date) {
+    warnings.push({ kind: "InsufficientSnapshots", count: 1 });
     return {
       twr: null,
       effectiveStart,
@@ -65,11 +73,29 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
     ...inPeriod.filter((p) => p.date > effectiveStart.date),
   ];
 
+  let firstNonZero = 0;
+  while (firstNonZero < chainPoints.length && chainPoints[firstNonZero].nav === 0) {
+    firstNonZero++;
+  }
+  const live = chainPoints.slice(firstNonZero);
+
+  if (live.length < 2) {
+    warnings.push({ kind: "InsufficientSnapshots", count: live.length });
+    return {
+      twr: null,
+      effectiveStart,
+      effectiveEnd,
+      clamped,
+      segments,
+      warnings,
+    };
+  }
+
   // Build sub-periods from consecutive snapshot points.
   let chained = 1;
-  for (let i = 0; i < chainPoints.length - 1; i++) {
-    const a = chainPoints[i];
-    const b = chainPoints[i + 1];
+  for (let i = 0; i < live.length - 1; i++) {
+    const a = live[i];
+    const b = live[i + 1];
     const intervalDays = daysBetween(a.date, b.date);
     if (intervalDays <= 0) continue;
 

@@ -171,3 +171,73 @@ describe("computeTwr — clamping", () => {
     expect(result.warnings.find((w) => w.kind === "Clamped")).toBeUndefined();
   });
 });
+
+describe("computeTwr — degenerate periods", () => {
+  it("returns null TWR with InsufficientSnapshots when period has one snapshot", () => {
+    const navPoints: NavPoint[] = [{ date: "2026-02-01", nav: 10000 }];
+    const result = computeTwr({
+      navPoints,
+      transactions: [],
+      period: { from: "2026-01-01", to: "2026-04-01" },
+      seed: null,
+    });
+
+    expect(result.twr).toBeNull();
+    expect(result.warnings).toContainEqual({
+      kind: "InsufficientSnapshots",
+      count: 1,
+    });
+  });
+
+  it("returns null TWR with no warnings when period has zero snapshots and no seed", () => {
+    const result = computeTwr({
+      navPoints: [],
+      transactions: [],
+      period: { from: "2026-01-01", to: "2026-04-01" },
+      seed: null,
+    });
+
+    expect(result.twr).toBeNull();
+    expect(result.effectiveStart).toBeNull();
+    expect(result.effectiveEnd).toBeNull();
+  });
+
+  it("skips the first sub-period when effective_start_nav = 0", () => {
+    // Account opened with first transfer creating the first snapshot at 0.
+    // 2026-01-01 NAV=0 (account opened, no funds yet)
+    // 2026-02-01 deposit +10000 (external)
+    // 2026-03-01 NAV=10500
+    // 2026-04-01 NAV=11000
+    //
+    // First sub-period [01-01, 03-01] has start NAV 0 — skip it.
+    // Chain begins at first non-zero snapshot (2026-03-01 = 10500).
+    // Sub-period 1: 10500 -> 11000 (no flows in 03-01 to 04-01)
+    //   r = 500 / 10500 ≈ 0.04762
+    // TWR = 0.04762
+
+    const navPoints: NavPoint[] = [
+      { date: "2026-01-01", nav: 0 },
+      { date: "2026-03-01", nav: 10500 },
+      { date: "2026-04-01", nav: 11000 },
+    ];
+
+    const result = computeTwr({
+      navPoints,
+      transactions: [
+        tx({
+          tradeDate: "2026-02-01",
+          action: "Journal",
+          rawAction: "MoneyLink Deposit",
+          amount: 10000,
+        }),
+      ],
+      period: { from: "2026-01-01", to: "2026-04-01" },
+      seed: null,
+    });
+
+    expect(result.twr).not.toBeNull();
+    expect(result.twr!).toBeCloseTo(0.04762, 4);
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].fromDate).toBe("2026-03-01");
+  });
+});
