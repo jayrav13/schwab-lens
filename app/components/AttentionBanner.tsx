@@ -15,13 +15,13 @@ function describe(w: Warning): string {
     case "MissingSeed":
       return `No starting NAV configured — period and "since seed" returns are unavailable. Run \`npm run account:configure\` to set a seed date and value.`;
     case "Clamped":
-      return `TWR calculation clamped to earliest available snapshot (${w.earliestDate}) — earlier periods excluded.`;
+      return `Earliest data: ${w.earliestDate}. Set a backfill seed via \`npm run account:configure\` to extend the period further back.`;
     case "NegativeNav":
-      return `Negative NAV detected on ${w.date} ($${w.nav.toFixed(2)}) — TWR calculation may be unreliable.`;
+      return `Account NAV went non-positive on ${w.date} (${w.nav.toLocaleString("en-US", { style: "currency", currency: "USD" })}). TWR cannot be computed across this point — the chain halts here.`;
     case "UnknownActionInPeriod":
-      return `Unknown action "${w.rawAction}" on ${w.date} ($${w.amount.toFixed(2)}) — excluded from TWR period.`;
+      return `Unrecognized action "${w.rawAction}" on ${w.date} (${w.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}) — excluded from TWR. See issue #20.`;
     case "InsufficientSnapshots":
-      return `Insufficient snapshots (${w.count}) for reliable TWR calculation — minimum recommended is 2 per period.`;
+      return `TWR needs ≥2 snapshots in the period; this period has ${w.count}.`;
   }
 }
 
