@@ -14,6 +14,14 @@ function describe(w: Warning): string {
       return `Historical closes unavailable for ${w.ticker} — Portfolio Value excludes this ticker's contribution on missing dates. (${w.reason})`;
     case "MissingSeed":
       return `No starting NAV configured — period and "since seed" returns are unavailable. Run \`npm run account:configure\` to set a seed date and value.`;
+    case "Clamped":
+      return `TWR calculation clamped to earliest available snapshot (${w.earliestDate}) — earlier periods excluded.`;
+    case "NegativeNav":
+      return `Negative NAV detected on ${w.date} ($${w.nav.toFixed(2)}) — TWR calculation may be unreliable.`;
+    case "UnknownActionInPeriod":
+      return `Unknown action "${w.rawAction}" on ${w.date} ($${w.amount.toFixed(2)}) — excluded from TWR period.`;
+    case "InsufficientSnapshots":
+      return `Insufficient snapshots (${w.count}) for reliable TWR calculation — minimum recommended is 2 per period.`;
   }
 }
 

@@ -32,7 +32,46 @@ export type Warning =
   | { kind: "NegativeShareEndOfDay"; ticker: string; date: string; shares: number }
   | { kind: "UnpairedAssignment"; date: string; contractKey: string }
   | { kind: "MissingHistoricalPrices"; ticker: string; reason: string }
-  | { kind: "MissingSeed" };
+  | { kind: "MissingSeed" }
+  | { kind: "Clamped"; earliestDate: string }
+  | { kind: "NegativeNav"; date: string; nav: number }
+  | { kind: "UnknownActionInPeriod"; date: string; rawAction: string; amount: number }
+  | { kind: "InsufficientSnapshots"; count: number };
+
+export type TwrFlow = {
+  date: string;
+  amount: number;
+  weight: number;
+};
+
+export type TwrSegment = {
+  fromDate: string;
+  toDate: string;
+  fromNav: number;
+  toNav: number;
+  flows: TwrFlow[];
+  flowsTotal: number;
+  weightedFlows: number;
+  return: number;
+};
+
+export type TwrResult = {
+  twr: number | null;
+  effectiveStart: { date: string; nav: number } | null;
+  effectiveEnd: { date: string; nav: number } | null;
+  clamped: boolean;
+  segments: TwrSegment[];
+  warnings: Warning[];
+};
+
+export type BenchmarkResult = {
+  twr: number;
+  ticker: string;
+  fromDate: string;
+  fromClose: number;
+  toDate: string;
+  toClose: number;
+};
 
 export type PortfolioState = {
   config: Config;
