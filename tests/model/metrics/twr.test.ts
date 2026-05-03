@@ -241,3 +241,28 @@ describe("computeTwr — degenerate periods", () => {
     expect(result.segments[0].fromDate).toBe("2026-03-01");
   });
 });
+
+describe("computeTwr — negative interior NAV", () => {
+  it("returns null TWR + NegativeNav warning when interior denom is non-positive", () => {
+    // Pathological: short option went deep ITM, snapshot NAV briefly negative.
+    const navPoints: NavPoint[] = [
+      { date: "2026-01-01", nav: 10000 },
+      { date: "2026-02-01", nav: -500 },
+      { date: "2026-03-01", nav: 11000 },
+    ];
+
+    const result = computeTwr({
+      navPoints,
+      transactions: [],
+      period: { from: "2026-01-01", to: "2026-03-01" },
+      seed: null,
+    });
+
+    expect(result.twr).toBeNull();
+    expect(result.warnings).toContainEqual({
+      kind: "NegativeNav",
+      date: "2026-02-01",
+      nav: -500,
+    });
+  });
+});

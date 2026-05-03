@@ -114,6 +114,19 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
     const flowsTotal = flows.reduce((s, f) => s + f.amount, 0);
     const weightedFlows = flows.reduce((s, f) => s + f.amount * f.weight, 0);
     const denom = a.nav + weightedFlows;
+
+    if (denom <= 0) {
+      warnings.push({ kind: "NegativeNav", date: a.date, nav: a.nav });
+      return {
+        twr: null,
+        effectiveStart,
+        effectiveEnd,
+        clamped,
+        segments,
+        warnings,
+      };
+    }
+
     const r = (b.nav - a.nav - flowsTotal) / denom;
 
     segments.push({
