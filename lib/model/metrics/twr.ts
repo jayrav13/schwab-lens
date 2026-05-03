@@ -19,14 +19,19 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
   const warnings: Warning[] = [];
   const segments: TwrSegment[] = [];
 
-  // Resolve effective endpoints. Happy path: start = first snapshot ≥ from,
-  // end = last snapshot ≤ to. Edge cases (seed backfill, clamping, single
-  // snapshot, etc.) handled in subsequent tasks.
+  // Resolve effective start: seed backfill if requested from <= seedDate,
+  // else first snapshot >= from.
   const inPeriod = input.navPoints.filter(
     (p) => p.date >= input.period.from && p.date <= input.period.to,
   );
 
-  const effectiveStart = inPeriod[0] ?? null;
+  const useSeed =
+    input.seed !== null && input.period.from <= input.seed.date;
+
+  const effectiveStart: { date: string; nav: number } | null = useSeed
+    ? { date: input.seed!.date, nav: input.seed!.value }
+    : inPeriod[0] ?? null;
+
   const effectiveEnd = inPeriod[inPeriod.length - 1] ?? null;
 
   if (
@@ -44,11 +49,18 @@ export function computeTwr(input: ComputeTwrInput): TwrResult {
     };
   }
 
+  // Build the chain of points: effectiveStart, then any snapshots after
+  // effectiveStart.date and ≤ effectiveEnd.date.
+  const chainPoints: NavPoint[] = [
+    effectiveStart,
+    ...inPeriod.filter((p) => p.date > effectiveStart.date),
+  ];
+
   // Build sub-periods from consecutive snapshot points.
   let chained = 1;
-  for (let i = 0; i < inPeriod.length - 1; i++) {
-    const a = inPeriod[i];
-    const b = inPeriod[i + 1];
+  for (let i = 0; i < chainPoints.length - 1; i++) {
+    const a = chainPoints[i];
+    const b = chainPoints[i + 1];
     const intervalDays = daysBetween(a.date, b.date);
     if (intervalDays <= 0) continue;
 

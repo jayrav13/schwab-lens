@@ -85,3 +85,51 @@ describe("computeTwr — happy path", () => {
     expect(seg2.return).toBeCloseTo(0.17391, 4);
   });
 });
+
+describe("computeTwr — seed backfill", () => {
+  it("uses seed as effective start when from <= seedDate", () => {
+    // seed: 2025-12-01 = 9000
+    // snapshots: 2026-02-01 = 10000, 2026-04-01 = 11000
+    // No flows.
+    // Sub-period 1: 9000 -> 10000 = (10000 - 9000)/9000 = 0.1111...
+    // Sub-period 2: 10000 -> 11000 = 0.1
+    // TWR = 1.1111 * 1.1 - 1 = 0.2222...
+
+    const navPoints: NavPoint[] = [
+      { date: "2026-02-01", nav: 10000 },
+      { date: "2026-04-01", nav: 11000 },
+    ];
+
+    const result = computeTwr({
+      navPoints,
+      transactions: [],
+      period: { from: "2025-11-01", to: "2026-04-01" },
+      seed: { date: "2025-12-01", value: 9000 },
+    });
+
+    expect(result.twr).not.toBeNull();
+    expect(result.twr!).toBeCloseTo(0.22222, 4);
+    expect(result.clamped).toBe(false);
+    expect(result.effectiveStart).toEqual({ date: "2025-12-01", nav: 9000 });
+    expect(result.segments).toHaveLength(2);
+    expect(result.segments[0].fromDate).toBe("2025-12-01");
+    expect(result.segments[0].fromNav).toBe(9000);
+  });
+
+  it("ignores seed when from > seedDate (period starts after seed)", () => {
+    const navPoints: NavPoint[] = [
+      { date: "2026-02-01", nav: 10000 },
+      { date: "2026-04-01", nav: 11000 },
+    ];
+    const result = computeTwr({
+      navPoints,
+      transactions: [],
+      period: { from: "2026-01-15", to: "2026-04-01" },
+      seed: { date: "2025-12-01", value: 9000 },
+    });
+
+    // Seed not used because requested from (2026-01-15) > seedDate (2025-12-01).
+    expect(result.effectiveStart?.date).toBe("2026-02-01");
+    expect(result.effectiveStart?.nav).toBe(10000);
+  });
+});
