@@ -26,7 +26,7 @@ import { buildPortfolio } from "@/lib/model/portfolio";
 import { chooseSeed } from "@/lib/positions/seed";
 import type { Config, PortfolioState, Seed, TwrResult } from "@/lib/model/types";
 import type { PositionsSnapshot } from "@/lib/positions/types";
-import { yesterdayInET } from "@/lib/util/dates";
+import { effectiveToday, yesterdayInET } from "@/lib/util/dates";
 import { resolvePeriod, type PeriodKey } from "@/lib/server/period";
 import { computeTwr } from "@/lib/model/metrics/twr";
 import { navSeriesFromSnapshots } from "@/lib/model/metrics/navSeries";
@@ -213,7 +213,7 @@ export async function loadAccountOptionsView(
     }
   }
 
-  const today = opts.today ?? yesterdayInET();
+  const today = opts.today ?? effectiveToday(latestSnapDate);
   const periodKey = opts.period ?? "All";
   const period = resolvePeriod(periodKey, today, seed.asOf);
 

@@ -30,7 +30,7 @@ import type {
   Warning,
 } from "@/lib/model/types";
 import type { Transaction } from "@/lib/csv/types";
-import { yesterdayInET } from "@/lib/util/dates";
+import { effectiveToday } from "@/lib/util/dates";
 import {
   resolvePeriod,
   type PeriodKey,
@@ -151,7 +151,7 @@ export async function loadAccountOverviewView(
     state.warnings.push({ kind: "MissingSeed" });
   }
 
-  const today = opts.today ?? yesterdayInET();
+  const today = opts.today ?? effectiveToday(latestSnapDate);
   const period = resolvePeriod(opts.period, today, seed.asOf);
 
   const includeMarket = opts.includeMarketData ?? true;

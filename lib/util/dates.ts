@@ -25,3 +25,13 @@ export function yesterdayInET(now: Date = new Date()): string {
   const get = (t: string) => parts.find((p) => p.type === t)!.value;
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
+
+export function effectiveToday(
+  latestSnapDate: string | null,
+  now: Date = new Date(),
+): string {
+  const fallback = yesterdayInET(now);
+  return latestSnapDate !== null && latestSnapDate > fallback
+    ? latestSnapDate
+    : fallback;
+}

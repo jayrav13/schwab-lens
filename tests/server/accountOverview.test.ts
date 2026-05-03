@@ -340,4 +340,55 @@ describe("loadAccountOverviewView", () => {
     expect(result.nav.computation.segments).toHaveLength(1);
     expect(result.nav.computation.segments[0].return).toBeCloseTo(0.1, 6);
   });
+
+  it("uses the latest snapshot date as 'today' when it is past wall-clock yesterday", async () => {
+    const db = makeDb();
+    const account = upsertAccount(db, { externalId: "tw99", label: "Future" });
+    setSeed(db, "tw99", "2026-01-01", 10000);
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2026-01-01",
+        symbol: "ACME",
+        description: "ACME",
+        quantity: 100,
+        price: 100,
+        marketValue: 10000,
+        costBasis: 10000,
+        assetType: "equity",
+        raw: {},
+      },
+      "snap1.csv",
+    );
+    insertSnapshot(
+      db,
+      account.id,
+      {
+        asOf: "2099-12-31",
+        symbol: "ACME",
+        description: "ACME",
+        quantity: 100,
+        price: 110,
+        marketValue: 11000,
+        costBasis: 10000,
+        assetType: "equity",
+        raw: {},
+      },
+      "snap-future.csv",
+    );
+
+    // No `today` supplied — exercises effectiveToday(latestSnapDate).
+    // The future snapshot is past wall-clock yesterday by decades, so the
+    // loader should adopt 2099-12-31 as 'today' rather than excluding it.
+    const result = await loadAccountOverviewView(account.uuid, {
+      db,
+      period: "All",
+      includeMarketData: false,
+    });
+    if (result?.kind !== "ready") throw new Error("expected ready");
+
+    expect(result.nav.effectiveEnd?.date).toBe("2099-12-31");
+    expect(result.nav.effectiveEnd?.nav).toBe(11000);
+  });
 });
