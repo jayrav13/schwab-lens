@@ -215,11 +215,7 @@ export async function loadAccountOptionsView(
 
   const today = opts.today ?? yesterdayInET();
   const periodKey = opts.period ?? "All";
-  const period = resolvePeriod(
-    periodKey,
-    today,
-    account.seedDate ?? earliestSnapshot?.asOf?.slice(0, 10) ?? today,
-  );
+  const period = resolvePeriod(periodKey, today, seed.asOf);
 
   const navPoints = navSeriesFromSnapshots(
     getAllSnapshotsByAccount(db, account.id),
