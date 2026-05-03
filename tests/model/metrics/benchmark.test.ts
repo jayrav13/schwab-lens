@@ -40,20 +40,15 @@ describe("computeBenchmark", () => {
     expect(result!.toDate).toBe("2026-04-01"); // last close on or before to
   });
 
-  it("returns null when there is no close on or before fromDate", () => {
+  it("snaps fromDate forward to the first close >= fromDate when none on or before", () => {
     const result = computeBenchmark({
       ticker: "SPY",
       closes,
       fromDate: "2025-12-01",
       toDate: "2026-04-01",
     });
-    // No close <= 2025-12-01, so we use the first available close on or after.
-    // For now: when no close is in the window strictly within [fromDate, toDate],
-    // function returns null. Adjust assertion based on actual behavior:
-    // we want the first close >= fromDate and last close <= toDate to bracket
-    // the period; if either side is empty, return null.
     expect(result).not.toBeNull();
-    expect(result!.fromDate).toBe("2026-01-02"); // first close ≥ fromDate
+    expect(result!.fromDate).toBe("2026-01-02");
   });
 
   it("returns null when no close falls inside [fromDate, toDate]", () => {
