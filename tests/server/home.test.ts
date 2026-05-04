@@ -5,7 +5,7 @@ import { runMigrations } from "@/lib/db/migrate";
 import { upsertAccount, setSeed } from "@/lib/db/repos/accounts";
 import { insertSnapshot } from "@/lib/db/repos/positionSnapshots";
 import { insertTransaction } from "@/lib/db/repos/transactions";
-import { loadHomeView } from "@/lib/server/home";
+import { loadHomeView, STALE_THRESHOLD_DAYS } from "@/lib/server/home";
 
 function makeDb() {
   const db = new Database(":memory:");
@@ -166,6 +166,32 @@ describe("loadHomeView", () => {
     upsertAccount(db, { externalId: "100", label: "Demo" });
     const view = await loadHomeView({ db, today: "2026-05-01" });
     expect(view.period.key).toBe("1M");
+  });
+
+  it("flags accounts as stale when last_seen_at is more than 7 days old", async () => {
+    const db = makeDb();
+    upsertAccount(db, { externalId: "100", label: "Fresh" });
+    upsertAccount(db, { externalId: "200", label: "Old" });
+    // Backdate the second account's last_seen_at directly.
+    db.prepare("UPDATE accounts SET last_seen_at = ? WHERE external_id = ?").run(
+      "2026-04-01T00:00:00.000Z",
+      "200",
+    );
+
+    const view = await loadHomeView({
+      db,
+      now: "2026-05-01T00:00:00.000Z",
+      today: "2026-05-01",
+    });
+    const byLabel = Object.fromEntries(
+      view.accounts.map((a) => [a.account.label, a]),
+    );
+    expect(byLabel["Fresh"].staleness.isStale).toBe(false);
+    expect(byLabel["Fresh"].staleness.daysSinceLastSeen).toBeLessThanOrEqual(
+      STALE_THRESHOLD_DAYS,
+    );
+    expect(byLabel["Old"].staleness.isStale).toBe(true);
+    expect(byLabel["Old"].staleness.daysSinceLastSeen).toBe(30);
   });
 
   it("treats accounts with snapshots but no transactions as having data", async () => {

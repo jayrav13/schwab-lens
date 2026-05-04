@@ -8,8 +8,13 @@ import { navSeriesFromSnapshots } from "@/lib/model/metrics/navSeries";
 import { computeTwr } from "@/lib/model/metrics/twr";
 import { resolvePeriod, type PeriodKey } from "@/lib/server/period";
 import { effectiveToday } from "@/lib/util/dates";
+import { daysBetweenIso } from "@/lib/util/relativeTime";
 import type { Transaction } from "@/lib/csv/types";
 import type { NavPoint } from "@/lib/model/types";
+
+// Cards older than this read as "stale" — exports for non-primary accounts
+// may be infrequent and we don't want a stale Roth IRA card to look fresh.
+export const STALE_THRESHOLD_DAYS = 7;
 
 export type AccountSummary = {
   account: Account;
@@ -20,6 +25,11 @@ export type AccountSummary = {
   effectiveStart: { date: string; nav: number } | null;
   effectiveEnd: { date: string; nav: number } | null;
   clamped: boolean;
+  staleness: {
+    daysSinceLastSeen: number;
+    isStale: boolean;
+    referenceTime: string;
+  };
 };
 
 export type HomeView = {
@@ -41,6 +51,9 @@ export type LoadHomeOpts = {
   db?: Database.Database;
   period?: PeriodKey;
   today?: string;
+  // Wall-clock reference for staleness ("are exports recent?"). Distinct from
+  // `today`, which is snapshot-anchored for TWR calculations. Defaults to now.
+  now?: string;
 };
 
 type LoadedAccount = {
@@ -56,6 +69,7 @@ export async function loadHomeView(opts: LoadHomeOpts = {}): Promise<HomeView> {
   const accounts = listAccounts(db);
   const periodKey: PeriodKey = opts.period ?? "1M";
   const loadedAt = new Date().toISOString();
+  const now = opts.now ?? loadedAt;
 
   const loaded: LoadedAccount[] = accounts.map((account) => {
     const txRows = listTransactionsByAccount(db, account.id);
@@ -88,7 +102,7 @@ export async function loadHomeView(opts: LoadHomeOpts = {}): Promise<HomeView> {
   const globalPeriod = resolvePeriod(periodKey, today, earliestAcrossAccounts);
 
   const summaries: AccountSummary[] = loaded.map((l) =>
-    summarizeAccount(l, periodKey, today),
+    summarizeAccount(l, periodKey, today, now),
   );
 
   const totalNav = summaries.reduce((s, a) => s + a.nav, 0);
@@ -115,7 +129,18 @@ function summarizeAccount(
   l: LoadedAccount,
   periodKey: PeriodKey,
   today: string,
+  now: string,
 ): AccountSummary {
+  const daysSinceLastSeen = Math.max(
+    0,
+    daysBetweenIso(l.account.lastSeenAt, now),
+  );
+  const staleness = {
+    daysSinceLastSeen,
+    isStale: daysSinceLastSeen > STALE_THRESHOLD_DAYS,
+    referenceTime: now,
+  };
+
   const hasData = l.transactions.length > 0 || l.navSeries.length > 0;
   if (!hasData) {
     return {
@@ -127,6 +152,7 @@ function summarizeAccount(
       effectiveStart: null,
       effectiveEnd: null,
       clamped: false,
+      staleness,
     };
   }
 
@@ -165,6 +191,7 @@ function summarizeAccount(
     effectiveStart: twrResult.effectiveStart,
     effectiveEnd: twrResult.effectiveEnd,
     clamped: period.clampedToSeed || twrResult.clamped,
+    staleness,
   };
 }
 
