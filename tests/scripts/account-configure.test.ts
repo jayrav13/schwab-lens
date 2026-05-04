@@ -173,3 +173,30 @@ describe("configureNonInteractive", () => {
     expect(after?.benchmark).toBe("QQQ");
   });
 });
+
+describe("parseFlags — label", () => {
+  it("parses --label", () => {
+    const flags = parseFlags(["--account=1", "--label=My Account"]);
+    expect(flags.label).toEqual({ kind: "set", value: "My Account" });
+  });
+
+  it("rejects empty --label", () => {
+    expect(parseFlags(["--label="]).label).toEqual({ kind: "keep" });
+  });
+
+  it("rejects --label=-", () => {
+    expect(() => parseFlags(["--label=-"])).toThrow(/label cannot be cleared/);
+  });
+});
+
+describe("configureNonInteractive — label", () => {
+  it("renames an account", () => {
+    const db = makeDb();
+    upsertAccount(db, { externalId: "100", label: "Old" });
+    configureNonInteractive(
+      { account: "100", label: { kind: "set", value: "New Label" } },
+      db,
+    );
+    expect(getAccountByExternalId(db, "100")?.label).toBe("New Label");
+  });
+});

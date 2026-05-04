@@ -71,6 +71,17 @@ export function getSnapshotByDate(
     .all(accountId, asOf) as PositionSnapshotRow[];
 }
 
+export function getAllSnapshotsByAccount(
+  db: Database.Database,
+  accountId: number,
+): PositionSnapshotRow[] {
+  return db
+    .prepare(
+      "SELECT * FROM position_snapshots WHERE account_id = ? ORDER BY as_of, id",
+    )
+    .all(accountId) as PositionSnapshotRow[];
+}
+
 export function getLatestSnapshotDate(
   db: Database.Database,
   accountId: number,

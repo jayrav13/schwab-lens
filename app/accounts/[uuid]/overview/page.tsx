@@ -51,7 +51,8 @@ export default async function AccountOverviewPage({
 
   const cashSlice = data.allocation.bar.find((s) => s.bucket === "CASH");
   const cash = cashSlice?.value ?? 0;
-  const { computation } = data.nav;
+  const seedDate = data.account.seedDate ?? "";
+  const seedValue = data.account.seedValue ?? 0;
 
   return (
     <>
@@ -61,7 +62,7 @@ export default async function AccountOverviewPage({
           <div>
             <div className="text-xl font-bold">{data.account.label} · Overview</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Seed {formatCurrency(computation.seedValue)} on {computation.seedDate || "—"} ·
+              Seed {formatCurrency(seedValue)} on {seedDate || "—"} ·
               Data through {data.dataThroughDate} · Source:{" "}
               <code className="bg-gray-100 dark:bg-neutral-800 px-1 rounded">
                 {data.sourceFiles.transactions.length} transactions ·{" "}

@@ -14,6 +14,14 @@ function describe(w: Warning): string {
       return `Historical closes unavailable for ${w.ticker} — Portfolio Value excludes this ticker's contribution on missing dates. (${w.reason})`;
     case "MissingSeed":
       return `No starting NAV configured — period and "since seed" returns are unavailable. Run \`npm run account:configure\` to set a seed date and value.`;
+    case "Clamped":
+      return `Earliest data: ${w.earliestDate}. Set a backfill seed via \`npm run account:configure\` to extend the period further back.`;
+    case "NegativeNav":
+      return `Account NAV went non-positive on ${w.date} (${w.nav.toLocaleString("en-US", { style: "currency", currency: "USD" })}). TWR cannot be computed across this point — the chain halts here.`;
+    case "UnknownActionInPeriod":
+      return `Unrecognized action "${w.rawAction}" on ${w.date} (${w.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}) — excluded from TWR. See issue #20.`;
+    case "InsufficientSnapshots":
+      return `TWR needs ≥2 snapshots in the period; this period has ${w.count}.`;
   }
 }
 
