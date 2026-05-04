@@ -1,78 +1,48 @@
-import Link from "next/link";
-import { loadHome } from "@/lib/server/home";
+import { loadHomeView } from "@/lib/server/home";
 import { OnboardingCard } from "@/app/components/OnboardingCard";
+import { TotalNavStrip } from "@/app/components/TotalNavStrip";
+import { AccountCard } from "@/app/components/AccountCard";
+import type { PeriodKey } from "@/lib/server/period";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const { accounts, loadedAt } = await loadHome();
+const VALID: ReadonlySet<PeriodKey> = new Set(["1M", "3M", "YTD", "1Y", "All"]);
 
-  if (accounts.length === 0) {
-    return <OnboardingCard dataDir="data/" />;
+// `/` defaults to 1M per spec, distinct from the shared YTD default.
+function homePeriodKey(input: string | undefined): PeriodKey {
+  if (input && (VALID as Set<string>).has(input)) return input as PeriodKey;
+  return "1M";
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
+  const { period: periodParam } = await searchParams;
+  const period = homePeriodKey(periodParam);
+
+  const view = await loadHomeView({ period });
+
+  if (view.accounts.length === 0) {
+    return (
+      <main className="min-h-screen p-6 max-w-7xl mx-auto">
+        <OnboardingCard dataDir="data/" />
+      </main>
+    );
   }
 
   return (
     <main className="min-h-screen p-6 max-w-7xl mx-auto">
-      <header className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-5 py-4 mb-6 flex items-baseline justify-between">
-        <div>
-          <div className="text-xl font-bold">Accounts</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {accounts.length} account{accounts.length === 1 ? "" : "s"} ingested
-          </div>
-        </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          Last refresh {new Date(loadedAt).toLocaleTimeString()}
-        </div>
-      </header>
-
-      <ul className="space-y-2">
-        {accounts.map((a) => (
-          <li
-            key={a.uuid}
-            className="rounded-lg border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-5 py-4"
-          >
-            <div className="flex items-baseline justify-between gap-4">
-              <div className="min-w-0">
-                <Link
-                  href={`/accounts/${a.uuid}/overview`}
-                  className="text-base font-semibold text-gray-900 dark:text-gray-100 hover:underline"
-                >
-                  {a.label}
-                </Link>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Last seen {new Date(a.lastSeenAt).toLocaleDateString()}
-                </div>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Link
-                  href={`/accounts/${a.uuid}/overview`}
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Overview
-                </Link>
-                <Link
-                  href={`/accounts/${a.uuid}/options`}
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Options
-                </Link>
-                <Link
-                  href={`/accounts/${a.uuid}/trades`}
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Trades
-                </Link>
-                <Link
-                  href={`/accounts/${a.uuid}/transactions`}
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Transactions
-                </Link>
-              </div>
-            </div>
-          </li>
+      <TotalNavStrip view={view} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {view.accounts.map((summary) => (
+          <AccountCard key={summary.account.uuid} summary={summary} />
         ))}
-      </ul>
+      </div>
+      <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-6 text-right">
+        Last refresh {new Date(view.loadedAt).toLocaleTimeString()}
+      </div>
     </main>
   );
 }
